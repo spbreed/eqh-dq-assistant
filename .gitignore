@@ -1,0 +1,14 @@
+.env
+.env.*
+.claude/settings.local.json
+cdk.out/
+**/__pycache__/
+*.pem
+credentials
+.venv/
+build/
+out/
+*.parquet
+.pytest_cache/
+eval/report.html
+eval/results/

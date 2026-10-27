@@ -1,0 +1,137 @@
+# GROUND TRUTH for the planted defects (SPEC §B5.4). Used by datagen/defects.py, verify_phase2.sh and eval.
+# day N = config simulation.day0_date + N days.
+defects:
+  - id: D01
+    type: null_spike
+    asset_key: redshift://eqh/core/claim_line
+    column: dx_code_1
+    segment: {payer_code: PAYER_TX2}
+    inject_on_day: 18
+    params: {baseline_null_rate: 0.03, defect_null_rate: 0.30}
+    business_impact: "837 mapping change by PAYER_TX2: diagnosis-driven measures and risk scores for TX2 members degrade"
+    description: "dx_code_1 null rate for PAYER_TX2 claim lines jumps from ~3% to ~30%"
+    expected_detection: null_spike
+  - id: D02
+    type: duplicates
+    asset_key: redshift://eqh/core/claim_header
+    column: claim_id
+    segment: {payer_code: PAYER_AZ2}
+    inject_on_day: 19
+    params: {dup_fraction: 0.04}
+    business_impact: "Resent file inflates PMPM and ED visits per 1,000 for AZ practices"
+    description: "PAYER_AZ2 resent a claims file; ~4% of AZ2 claim headers are duplicated"
+    expected_detection: duplicates
+  - id: D03
+    type: stale
+    asset_key: glue://eqh_raw/raw_hie_tn_adt
+    downstream_asset_key: redshift://eqh/core/adt_event
+    column: null
+    segment: {state: TN}
+    inject_on_day: 16
+    params: {last_good_day: 15}
+    business_impact: "ED/inpatient follow-up for Tennessee members goes blind (no ADT alerts)"
+    description: "Tennessee HIE ADT feed stops arriving after day 15"
+    expected_detection: stale
+    severity: high
+  - id: D04
+    type: schema_drift
+    asset_key: glue://eqh_raw/raw_az1_834_elig
+    column: pcp_assignment_npi
+    inject_on_day: 20
+    params: {change: column_removed}
+    business_impact: "PCP attribution and CareEmpower panels break for PAYER_AZ1 members"
+    description: "PAYER_AZ1 834 eligibility feed drops the pcp_assignment_npi column"
+    expected_detection: schema_drift
+    severity: high
+  - id: D05
+    type: schema_drift
+    asset_key: redshift://eqh/core/lab_result
+    column: result_value
+    inject_on_day: 20
+    params: {change: type_changed, old_type: numeric, new_type: "character varying", example_value_shape: ">NN.N"}
+    business_impact: "HbA1c control (GSD) is miscomputed; payer supplemental quality submission silently corrupted (see D11)"
+    description: "lab_result.result_value changes from numeric to varchar (values like '>14.0')"
+    expected_detection: schema_drift
+    severity: high
+  - id: D06
+    type: ri_orphans
+    asset_key: redshift://eqh/core/claim_header
+    column: member_id
+    inject_on_day: 17
+    params: {orphan_fraction: 0.02}
+    business_impact: "Cost without attribution: claims for retro-termed members can't be assigned to a practice"
+    description: "~2% of newly received claim headers reference member_ids not in core.member"
+    expected_detection: ri_orphans
+  - id: D07
+    type: volume_anomaly
+    asset_key: redshift://eqh/core/claim_header
+    upstream_asset_key: glue://eqh_raw/raw_la1_clm_extract
+    column: null
+    segment: {state: LA, payer_code: PAYER_LA1}
+    inject_on_day: 21
+    params: {volume_factor: 0.30}
+    business_impact: "Louisiana cost and quality look artificially good; LA practice scorecards are wrong"
+    description: "PAYER_LA1 claims extract delivers ~70% fewer claims than normal"
+    expected_detection: volume_anomaly
+    severity: high
+  - id: D08
+    type: overlap
+    asset_key: redshift://eqh/core/eligibility_span
+    column: null
+    inject_on_day: 10
+    params: {overlap_fraction: 0.02}
+    business_impact: "Double-counted member months inflate PMPM denominators and capitation"
+    description: "~2% of members get overlapping eligibility spans after a redetermination batch"
+    expected_detection: overlap
+  - id: D09
+    type: undocumented
+    asset_key: redshift://eqh/vbc_mart/practice_shared_savings_calc
+    column: null
+    inject_on_day: 0
+    business_impact: "Finance can't self-serve shared savings questions"
+    description: "View has no table or column comments and cryptic column names"
+    expected_detection: undocumented_assets_answer
+  - id: D10
+    type: outdated_doc
+    asset_key: redshift://eqh/core/member
+    column: chw_assigned_id
+    inject_on_day: 0
+    business_impact: "Misleads onboarding analysts looking for CHW assignment"
+    description: "core.member comment mentions chw_assigned_id, which no longer exists"
+    expected_detection: enrichment_doc_issues
+  - id: D11
+    type: hidden_dependency
+    asset_key: redshift://eqh/outbound/payer_supplemental_quality_file
+    upstream_asset_key: redshift://eqh/core/lab_result
+    column: result_value
+    inject_on_day: 0
+    params: {via: redshift://eqh/vbc_mart/v_member_lab_measures}
+    business_impact: "D05 silently corrupts a payer submission"
+    description: "Outbound payer supplemental quality file reads lab_result.result_value through a late-binding view"
+    expected_detection: lineage_impact_answer
+  - id: D12
+    type: orphaned_asset
+    asset_key: redshift://eqh/vbc_mart/legacy_pmpm_2023
+    column: null
+    inject_on_day: 0
+    business_impact: "Clutter and storage/compute cost"
+    description: "Legacy PMPM table not read for 30+ days"
+    expected_detection: unused_assets_answer
+  - id: D13
+    type: rule_failed
+    asset_key: redshift://eqh/careempower/open_care_gaps
+    column: member_id
+    inject_on_day: 16
+    params: {retro_term_fraction: 0.03, rule: open_gaps_active_eligibility}
+    business_impact: "Practices chase care gaps for members who are no longer eligible"
+    description: "open_care_gaps includes members whose eligibility ended (retro-terminations)"
+    expected_detection: rule_failed
+  - id: D14
+    type: rule_failed
+    asset_key: redshift://eqh/core/sdoh_screening
+    column: z_code
+    inject_on_day: 18
+    params: {invalid_fraction: 0.05, rule: z_code_value_set}
+    business_impact: "SDoH needs reporting (transport, food, housing) is wrong"
+    description: "~5% of new SDoH screenings carry invalid Z-codes"
+    expected_detection: rule_failed

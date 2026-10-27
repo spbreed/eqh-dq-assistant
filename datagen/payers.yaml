@@ -1,0 +1,97 @@
+# Fictitious payers per state and their feed quirks. Synthetic only: no real health plan names.
+# share = share of members; feeds = raw feeds the payer sends (one Glue table each in eqh_raw).
+# quirks drive how the raw layer looks: column naming, date format, delimiter, cadence.
+states:
+  AZ: {program: AHCCCS, lobs: [MEDICAID, DSNP], pediatric_share: 0.42, hie_feed: raw_hie_az_adt}
+  TX: {program: STAR, lobs: [MEDICAID, STAR_KIDS, CHIP], pediatric_share: 0.68, hie_feed: raw_hie_tx_adt}
+  LA: {program: MEDICAID_MCO, lobs: [MEDICAID], pediatric_share: 0.45, hie_feed: raw_hie_la_adt}
+  TN: {program: TENNCARE, lobs: [MEDICAID], pediatric_share: 0.44, hie_feed: raw_hie_tn_adt}
+  VA: {program: MEDICAID_MCO, lobs: [MEDICAID], pediatric_share: 0.40, hie_feed: raw_hie_va_adt}
+
+payers:
+  PAYER_AZ1:
+    state: AZ
+    share: 0.20
+    quirks: {naming: upper_abbrev, date_format: "%Y%m%d", delimiter: "|"}
+    feeds:
+      eligibility: {table: raw_az1_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_az1_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_az1_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_az1_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_az1_rx_claims, format: ncpdp_flat, cadence_hours: 24}
+  PAYER_AZ2:
+    state: AZ
+    share: 0.15
+    quirks: {naming: snake, date_format: "%m/%d/%Y", delimiter: ","}
+    feeds:
+      eligibility: {table: raw_az2_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_az2_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_az2_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_az2_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_az2_rx_claims, format: csv, cadence_hours: 24}
+  PAYER_AZ3:
+    state: AZ
+    share: 0.08
+    quirks: {naming: camel, date_format: "%Y-%m-%d", delimiter: ","}
+    feeds:
+      eligibility: {table: raw_az3_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_az3_837i_claims, format: x12_837i_flat, cadence_hours: 24}
+      roster: {table: raw_az3_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_az3_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_az3_rx_claims, format: csv, cadence_hours: 24}
+  PAYER_TX1:
+    state: TX
+    share: 0.17
+    quirks: {naming: snake, date_format: "%Y-%m-%d", delimiter: "\t"}
+    feeds:
+      eligibility: {table: raw_tx1_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_tx1_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_tx1_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_tx1_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_tx1_rx_claims, format: csv, cadence_hours: 24}
+  PAYER_TX2:
+    state: TX
+    share: 0.14
+    quirks: {naming: upper_abbrev, date_format: "%m%d%Y", delimiter: "|"}
+    feeds:
+      eligibility: {table: raw_tx2_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_tx2_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_tx2_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_tx2_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_tx2_rx_claims, format: csv, cadence_hours: 24}
+  PAYER_LA1:
+    state: LA
+    share: 0.11
+    quirks: {naming: legacy, date_format: "%d-%b-%Y", delimiter: ","}
+    feeds:
+      eligibility: {table: raw_la1_elig_extract, format: csv, cadence_hours: 24}
+      claims: {table: raw_la1_clm_extract, format: csv, cadence_hours: 24}
+      roster: {table: raw_la1_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_la1_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_la1_rx_extract, format: csv, cadence_hours: 24}
+  PAYER_TN1:
+    state: TN
+    share: 0.10
+    quirks: {naming: snake, date_format: "%Y%m%d", delimiter: "|"}
+    feeds:
+      eligibility: {table: raw_tn1_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_tn1_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_tn1_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_tn1_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_tn1_rx_claims, format: csv, cadence_hours: 24}
+  PAYER_VA1:
+    state: VA
+    share: 0.05
+    quirks: {naming: camel, date_format: "%Y-%m-%d", delimiter: ","}
+    feeds:
+      eligibility: {table: raw_va1_834_elig, format: x12_834_flat, cadence_hours: 24}
+      claims: {table: raw_va1_837p_claims, format: x12_837p_flat, cadence_hours: 24}
+      roster: {table: raw_va1_roster_pcp, format: csv, cadence_hours: 168}
+      gaps: {table: raw_payer_va1_gaps, format: csv, cadence_hours: 168}
+      pharmacy: {table: raw_va1_rx_claims, format: csv, cadence_hours: 24}
+
+# Non-payer feeds
+shared_feeds:
+  hie_adt: {cadence_hours: 24}                     # one raw table per state HIE (states.*.hie_feed)
+  ehr_labs: {table: raw_ehr_ccda_labs, cadence_hours: 24}
+  careempower: {table: raw_careempower_ops, cadence_hours: 24}   # CHW, SDoH, HaH activity export

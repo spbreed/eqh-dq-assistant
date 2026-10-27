@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Data Quality Assistant{% endblock %}</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--muted:#5b6475;--line:#e2e5ea;--accent:#2f5bd3;--warn:#b54708;--bad:#b42318;--ok:#067647;--chip:#eef2ff}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.banner{background:#fff4e5;color:#7a3e00;text-align:center;font-weight:600;padding:6px;border-bottom:1px solid #f5c58b;font-size:13px}
+header{display:flex;gap:18px;align-items:center;padding:10px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+header b{font-size:16px}header nav a{color:var(--muted);text-decoration:none;margin-right:14px}header nav a.on{color:var(--accent);font-weight:600}
+header .me{margin-left:auto;color:var(--muted);font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.chip{display:inline-block;background:var(--chip);color:var(--accent);border-radius:999px;padding:1px 9px;font:12px ui-monospace,monospace;text-decoration:none;margin:1px}
+.sev-high{color:var(--bad);font-weight:600}.sev-medium{color:var(--warn);font-weight:600}.sev-low{color:var(--muted)}
+.muted{color:var(--muted)}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}button.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}button.danger{background:var(--bad)}
+textarea,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;width:100%}
+.label{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:4px;background:#f2f4f7;color:var(--muted)}
+.label.ai{background:#fef0c7;color:#93370d}
+</style>{% block head %}{% endblock %}</head>
+<body><div class="banner">Prototype – synthetic data. No real members, payers or providers.</div>
+<header><b>Data Quality Assistant</b><nav>
+<a href="/" class="{{ 'on' if page=='chat' }}">Chat</a>
+{% if 'steward' in user.groups %}<a href="/review" class="{{ 'on' if page=='review' }}">Steward review</a>{% endif %}
+</nav><span class="me">{{ user.username }} · {{ user.groups|join(', ') or 'no groups' }} · <a href="/logout">Sign out</a></span></header>
+<main>{% block body %}{% endblock %}</main>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const chip = k => `<a class="chip" href="/asset?key=${encodeURIComponent(k)}">${esc(k)}</a>`;
+function md(t){ // tiny, safe markdown: escape first, then format
+  let h = esc(t);
+  h = h.replace(/`((?:redshift|glue|extract|datashare):\/\/[^`\s]+)`/g, (m,k)=>chip(k));
+  h = h.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  h = h.replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^## (.*)$/gm,'<h3>$1</h3>');
+  h = h.replace(/^(\s*)[-*] (.*)$/gm,'$1• $2');
+  return h.replace(/\n/g,'<br>');
+}
+function sparkline(series, w=360, h=90){
+  if(!series.length) return '';
+  const vs = series.map(p=>+p.value), mn=Math.min(...vs), mx=Math.max(...vs), r=(mx-mn)||1;
+  const pts = vs.map((v,i)=>`${(i/(vs.length-1||1))*(w-20)+10},${h-10-((v-mn)/r)*(h-25)}`).join(' ');
+  return `<svg width="${w}" height="${h}" role="img" aria-label="trend"><polyline fill="none" stroke="#2f5bd3" stroke-width="2" points="${pts}"/>`+
+    vs.map((v,i)=>`<circle cx="${(i/(vs.length-1||1))*(w-20)+10}" cy="${h-10-((v-mn)/r)*(h-25)}" r="2.5" fill="#2f5bd3"><title>${esc(series[i].day)}: ${v}</title></circle>`).join('')+
+    `<text x="10" y="12" font-size="10" fill="#5b6475">max ${mx.toLocaleString()}</text><text x="10" y="${h-1}" font-size="10" fill="#5b6475">${esc(series[0].day)} → ${esc(series[series.length-1].day)} · min ${mn.toLocaleString()}</text></svg>`;
+}
+</script>{% block scripts %}{% endblock %}</body></html>

@@ -1,0 +1,8 @@
+# Assets/columns visible only to the listed Cognito groups (SPEC §B5.3 sensitive subset).
+restricted_bh:
+  assets:
+    - redshift://eqh/core/sdoh_screening
+    - glue://eqh_silver/sdoh_screening
+    - redshift://eqh/spectrum_silver/sdoh_screening
+    - glue://eqh_raw/raw_careempower_ops
+  column_patterns: ["^bh_", "behavioral", "z_code$", "need_category$"]

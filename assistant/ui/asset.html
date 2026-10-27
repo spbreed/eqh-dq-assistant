@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block head %}<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>{% endblock %}
+{% block body %}
+<div id="a" class="card">Loading…</div>
+<div class="card"><h3 style="margin-top:0">Lineage</h3><div id="cy" style="height:380px;border:1px solid var(--line);border-radius:8px"></div></div>
+<div id="iss" class="card"></div><div id="drift" class="card"></div><div id="cols" class="card"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+(async()=>{
+  const key = {{ asset_key|tojson }}; const r = await (await fetch('/api/asset?key='+encodeURIComponent(key))).json();
+  const a = r.asset;
+  if(a.error){ document.getElementById('a').innerHTML = `<b>${esc(key)}</b><p class="sev-high">${esc(a.message||a.error)}</p>`; return; }
+  const lbl = a.description_source.startsWith('AI') ? 'label ai' : 'label';
+  document.getElementById('a').innerHTML = `<h2 style="margin:0 0 6px">${esc(a.asset_key)}</h2>
+   <div class="muted">${esc(a.platform)} · ${esc(a.type)} · domain ${esc(a.domain||'—')} · state ${esc(a.state||'—')}</div>
+   <p><span class="${lbl}">${esc(a.description_source)}</span> ${esc(a.description||'No description yet.')}</p>
+   ${a.ai_doc_issues.length?`<p><span class="label ai">Doc issues (AI)</span> ${a.ai_doc_issues.map(esc).join('; ')}</p>`:''}
+   <div class="muted">Tags: ${(a.tags||[]).map(esc).join(', ')||'—'} · Reads (30d): ${a.reads_30d} · Last read: ${esc(a.last_read_at||'never')} · Readers: ${(a.readers||[]).map(esc).join(', ')||'—'}</div>`;
+  const nodes = new Map([[key,{data:{id:key,label:key.split('/').slice(-2).join('/'),me:1}}]]), edges=[];
+  for(const d of ['upstream','downstream']) for(const e of (r.lineage[d]?.edges||[])){
+    for(const n of [e.from,e.to]) if(!nodes.has(n)) nodes.set(n,{data:{id:n,label:n.split('/').slice(-2).join('/')}});
+    edges.push({data:{id:e.from+'>'+e.to+e.type+(e.column||''),source:e.from,target:e.to,label:e.type+(e.late_binding?' (late-binding)':'')}});}
+  cytoscape({container:document.getElementById('cy'),elements:[...nodes.values(),...edges],layout:{name:'breadthfirst',directed:true,spacingFactor:1.1},
+    style:[{selector:'node',style:{'label':'data(label)','font-size':9,'background-color':'#9db2f0','text-wrap':'wrap','text-max-width':120}},
+           {selector:'node[me]',style:{'background-color':'#2f5bd3'}},
+           {selector:'edge',style:{'curve-style':'bezier','target-arrow-shape':'triangle','width':1.5,'line-color':'#c3c9d4','target-arrow-color':'#c3c9d4','label':'data(label)','font-size':7,'color':'#5b6475'}}]})
+   .on('tap','node',e=>{const id=e.target.id(); if(/^(redshift|glue|extract|datashare):/.test(id)) location='/asset?key='+encodeURIComponent(id);});
+  document.getElementById('iss').innerHTML = '<h3 style="margin-top:0">DQ issues</h3>' + (r.issues.length ? '<table><tr><th>Type</th><th>Severity</th><th>Column/segment</th><th>First detected</th><th>Status</th><th>Impact</th></tr>'+
+    r.issues.map(i=>`<tr><td>${esc(i.issue_type)}</td><td class="sev-${esc(i.severity)}">${esc(i.severity)}</td><td>${esc(i.column_name||'')} ${esc(i.segment||'')}</td><td>${esc(i.first_detected)}</td><td>${esc(i.status)}</td><td>${esc(i.top_downstream_impact)}</td></tr>`).join('')+'</table>' : '<p class="muted">No issues.</p>');
+  document.getElementById('drift').innerHTML = '<h3 style="margin-top:0">Schema drift</h3>' + (r.drift.length ? '<table><tr><th>Change</th><th>Column</th><th>Old</th><th>New</th><th>Detected</th></tr>'+
+    r.drift.map(d=>`<tr><td>${esc(d.change_type)}</td><td>${esc(d.column_name||'')}</td><td>${esc(d.old_value||'')}</td><td>${esc(d.new_value||'')}</td><td>${esc(d.detected_at)}</td></tr>`).join('')+'</table>' : '<p class="muted">No drift recorded.</p>');
+  document.getElementById('cols').innerHTML = `<h3 style="margin-top:0">Columns (${a.columns.length}${a.hidden_columns?`, ${a.hidden_columns} hidden by entitlement`:''})</h3><table><tr><th>Name</th><th>Type</th><th>Description</th></tr>`+
+    a.columns.map(c=>`<tr><td><code>${esc(c.name)}</code></td><td>${esc(c.type)}</td><td>${c.description?`<span class="${c.description_source.startsWith('AI')?'label ai':'label'}">${esc(c.description_source)}</span> ${esc(c.description)}`:'<span class="muted">—</span>'}</td></tr>`).join('')+'</table>';
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+# Business glossary (synthetic pilot). Published as one Markdown file per term to s3://...-glossary/terms/.
+terms:
+  - term: PMPM
+    synonyms: [per member per month, per-member-per-month cost]
+    definition: Total paid (or allowed) cost divided by member months in the period. The core cost metric for value-based contracts; see vbc_mart.pmpm_cost_by_practice.
+    related: [Member month, Total cost of care]
+  - term: Member month
+    synonyms: [MM, member months]
+    definition: One member eligible for one calendar month. Denominator for PMPM and utilisation per 1,000. Built from eligibility spans in vbc_mart.member_month; overlapping spans double count.
+    related: [PMPM, Eligibility span]
+  - term: Eligibility span
+    synonyms: [coverage span, enrollment span]
+    definition: A continuous period of payer coverage for a member (start/end date) from the payer 834 or eligibility extract. Medicaid members churn, so members often have several spans with gaps.
+    related: [834, Redetermination, Retro-termination]
+  - term: PCP assignment
+    synonyms: [PCP attribution, member attribution, panel assignment]
+    definition: The primary care provider (and therefore practice) a payer assigns a member to, delivered on monthly or weekly roster files. Drives which practice is accountable for the member's cost and quality.
+    related: [Attribution roster, Practice panel]
+  - term: Attribution roster
+    synonyms: [payer roster, PCP roster]
+    definition: Payer file listing member-to-PCP assignments for a month. Loaded into core.pcp_assignment as monthly snapshots.
+    related: [PCP assignment]
+  - term: Practice panel
+    synonyms: [panel, CareEmpower panel]
+    definition: The set of members attributed to a practice, with risk tier and open care gaps, as shown in CareEmpower (careempower.panel_member_risk).
+    related: [CareEmpower, Risk tier]
+  - term: Care gap
+    synonyms: [gap in care, open gap]
+    definition: A recommended service a member has not yet received for a quality measure (for example a well-child visit or HbA1c test). Payers send gap files; CareEmpower also computes gaps (core.care_gap).
+    related: [HEDIS measure, Payer gap file]
+  - term: Payer gap file
+    synonyms: [payer care-gap file]
+    definition: Weekly or monthly file from a payer listing members with open or met measure gaps; compared with CareEmpower-computed gaps.
+    related: [Care gap]
+  - term: HEDIS measure
+    synonyms: [quality measure, measure code]
+    definition: Standardised quality measure. Pilot measure codes are WCV (well-child visits 3-21), W30 (well-child first 30 months), CIS (childhood immunisation), BCS (breast cancer screening), GSD (glycemic status for diabetes, HbA1c), CBP (controlling blood pressure), AMR (asthma medication ratio), PPC (prenatal and postpartum care).
+    related: [Care gap, Supplemental data]
+  - term: GSD
+    synonyms: [glycemic status assessment, HbA1c control]
+    definition: Diabetes measure based on the most recent HbA1c result; controlled when HbA1c < 9.0 (or < 8.0 for the stricter rate). Depends on core.lab_result.result_value.
+    related: [HbA1c, HEDIS measure]
+  - term: HbA1c
+    synonyms: [A1c, hemoglobin A1c, LOINC 4548-4]
+    definition: Lab test of average blood glucose (LOINC 4548-4), reported in percent. Values above the analyser's range may arrive as text such as '>14.0'.
+    related: [GSD, Lab result]
+  - term: ED visits per 1,000
+    synonyms: [ED/1000, emergency department utilization per 1000]
+    definition: Emergency department visits divided by member months, times 12,000 (visits per 1,000 member-years). Reported by practice in vbc_mart.ed_visits_per_1000_by_practice; a headline outcome for the care model.
+    related: [Member month, ADT]
+  - term: Shared savings
+    synonyms: [savings settlement]
+    definition: When a practice's actual PMPM is below its benchmark PMPM and quality gates are met, a share of the savings (practice share %) is paid to the practice at annual settlement. See vbc_mart.practice_shared_savings_calc and core.shared_savings_settlement.
+    related: [Benchmark PMPM, Quality gate, Upside-only contract]
+  - term: Benchmark PMPM
+    synonyms: [target PMPM, benchmark]
+    definition: Risk-adjusted expected PMPM for a practice's attributed population in the performance year, used to compute shared savings.
+    related: [Shared savings, PMPM]
+  - term: Quality gate
+    synonyms: [quality threshold]
+    definition: Minimum quality performance a practice must meet to receive shared savings.
+    related: [Shared savings]
+  - term: Capitation
+    synonyms: [cap, capitated payment]
+    definition: Fixed per-member-per-month payment to a practice regardless of services used; full risk for the covered services.
+    related: [Shared risk contract]
+  - term: Upside-only contract
+    synonyms: [one-sided risk]
+    definition: Value-based contract where the practice shares savings but not losses.
+    related: [Shared risk contract, Shared savings]
+  - term: Shared risk contract
+    synonyms: [two-sided risk, downside risk]
+    definition: Contract where the practice shares both savings and losses against the benchmark.
+    related: [Upside-only contract, Capitation]
+  - term: Accelerated reimbursement
+    synonyms: [advance payment, accelerated payment]
+    definition: Program that pays practices faster than standard claim adjudication timelines to support independent practices' cash flow.
+    related: [Practice incentive payment]
+  - term: Practice incentive payment
+    synonyms: [quality incentive, incentive statement]
+    definition: Monthly payment to a practice for quality performance (measure bundles), reported on the outbound practice incentive statement.
+    related: [HEDIS measure]
+  - term: Risk tier
+    synonyms: [risk level, acuity tier]
+    definition: Actuarial stratification of members from 1 (lowest) to 5 (highest) refreshed monthly (core.member_risk_score). Tiers 4-5 are candidates for Health at Home.
+    related: [Unplanned admission flag, Health at Home]
+  - term: Unplanned admission flag
+    synonyms: [predicted unplanned admit, admission risk]
+    definition: Model output predicting an unplanned hospital admission in the next months.
+    related: [Risk tier]
+  - term: Health at Home
+    synonyms: [HaH, in-home program]
+    definition: About 12-week in-home care program for high-risk adults (risk tiers 4-5) combining NP visits, CHW and SDoH support; outcomes compare ED use before vs after (vbc_mart.hah_outcomes, outbound.payer_hah_report).
+    related: [Risk tier, CHW, ED visits per 1,000]
+  - term: CHW
+    synonyms: [community health worker]
+    definition: Community health worker who does outreach, navigation and SDoH support; encounters in core.chw_encounter.
+    related: [SDoH, Health at Home]
+  - term: SDoH
+    synonyms: [social determinants of health, social needs, HRSN]
+    definition: Non-medical factors such as housing, food, transport and financial strain. Screenings recorded with ICD-10 Z-codes in core.sdoh_screening (restricted data).
+    related: [Z-code, CHW]
+  - term: Z-code
+    synonyms: [ICD-10 Z code, Z55-Z65]
+    definition: ICD-10-CM codes Z55-Z65 documenting social needs, for example Z59.41 food insecurity, Z59.82 transportation insecurity, Z59.0x homelessness.
+    related: [SDoH]
+  - term: Redetermination
+    synonyms: [renewal, Medicaid unwinding]
+    definition: Periodic Medicaid eligibility re-check. Members can lose and regain coverage, creating span gaps and, if processed badly, overlapping spans.
+    related: [Eligibility span, Retro-termination]
+  - term: Retro-termination
+    synonyms: [retro term, retroactive termination]
+    definition: Payer ends a member's eligibility with an end date in the past. Claims and gaps for that period can become orphaned.
+    related: [Eligibility span, Referential integrity]
+  - term: Supplemental data
+    synonyms: [supplemental quality file, supplemental submission]
+    definition: Clinical data (labs, EHR results) submitted to payers to close HEDIS gaps that claims alone miss; outbound.payer_supplemental_quality_file.
+    related: [HEDIS measure, GSD]
+  - term: "834"
+    synonyms: [X12 834, eligibility file]
+    definition: X12 benefit enrollment and maintenance transaction used by payers to send eligibility adds, changes and terminations.
+    related: [Eligibility span]
+  - term: "837"
+    synonyms: [X12 837, 837P, 837I, claim file]
+    definition: X12 healthcare claim transaction; 837P professional, 837I institutional. Source of raw claims feeds.
+    related: [Claim]
+  - term: ADT
+    synonyms: [admit discharge transfer, HIE ADT]
+    definition: HL7 admit/discharge/transfer event feed from a state HIE (A01 admit, A03 discharge, A04 ED registration) used for ED and inpatient follow-up.
+    related: [HIE]
+  - term: HIE
+    synonyms: [health information exchange]
+    definition: State health information exchange providing ADT and clinical data across hospitals.
+    related: [ADT]
+  - term: AHCCCS
+    synonyms: [Arizona Medicaid]
+    definition: Arizona Health Care Cost Containment System, Arizona's Medicaid program.
+    related: [Medicaid]
+  - term: STAR
+    synonyms: [Texas STAR, STAR Kids, CHIP]
+    definition: Texas Medicaid managed care programs; STAR (mothers, children, some adults), STAR Kids (children with disabilities), CHIP (children's health insurance).
+    related: [Medicaid]
+  - term: TennCare
+    synonyms: [Tennessee Medicaid]
+    definition: Tennessee's Medicaid program.
+    related: [Medicaid]
+  - term: D-SNP
+    synonyms: [dual special needs plan, dual eligible]
+    definition: Medicare Advantage plan for members eligible for both Medicare and Medicaid.
+    related: [Medicaid]
+  - term: CareEmpower
+    synonyms: [practice platform]
+    definition: Proprietary practice-facing platform showing risk-stratified panels and care gaps; fed by outbound.careempower_panel_feed.
+    related: [Practice panel, Care gap]
+  - term: Referential integrity
+    synonyms: [RI, orphan records]
+    definition: Every foreign key value exists in its parent table, for example every claim_header.member_id exists in core.member. Violations are called orphans.
+    related: [Retro-termination]
+  - term: Total cost of care
+    synonyms: [TCOC]
+    definition: All medical and pharmacy spend for an attributed population; the basis of risk-bearing VBC agreements.
+    related: [PMPM, Shared savings]
+  - term: Datashare
+    synonyms: [Redshift datashare]
+    definition: Live read-only sharing of Redshift objects with another namespace; eqh_actuarial_share and eqh_finance_share feed actuarial and finance teams.
+    related: []

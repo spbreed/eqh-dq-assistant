@@ -1,0 +1,16 @@
+# Rules that tag assets with business_domain and state (first match wins, matched against the object name).
+domains:
+  - {domain: eligibility, patterns: ["elig", "834", "member_month", "^member$", "eligibility", "roster", "pcp_assignment", "panel"]}
+  - {domain: claims, patterns: ["claim", "837", "clm", "rx", "pharmacy", "pmpm", "ed_visits"]}
+  - {domain: quality, patterns: ["gap", "lab", "quality", "scorecard", "ccda", "supplemental"]}
+  - {domain: care-model, patterns: ["chw", "sdoh", "hah", "health_at_home", "careempower", "risk"]}
+  - {domain: finance, patterns: ["incentive", "savings", "settlement", "contract", "finance"]}
+  - {domain: HIE, patterns: ["adt", "hie"]}
+  - {domain: network, patterns: ["practice", "provider"]}
+states:
+  # object name tokens -> state
+  az: AZ
+  tx: TX
+  la: LA
+  tn: TN
+  va: VA

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="log"></div>
+<div class="card" style="position:sticky;bottom:10px">
+  <form id="f" style="display:flex;gap:8px"><input id="q" autocomplete="off" placeholder="Ask about datasets, lineage, data quality… e.g. Why did Louisiana claims volume drop yesterday?"><button>Ask</button></form>
+  <div class="muted" style="font-size:12px;margin-top:6px">Read-only. Answers cite asset keys; AI drafts are labelled. No row-level data is ever shown.</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const log = document.getElementById('log'), history = [];
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault(); const qi = document.getElementById('q'), q = qi.value.trim(); if(!q) return; qi.value='';
+  log.insertAdjacentHTML('beforeend', `<div class="card"><b>You</b><div>${esc(q)}</div></div>`);
+  const box = document.createElement('div'); box.className='card';
+  box.innerHTML = '<b>Assistant</b><div class="tools muted" style="font-size:12px"></div><div class="ans"></div><div class="charts"></div><div class="meta muted" style="font-size:12px"></div>';
+  log.appendChild(box); box.scrollIntoView();
+  let text = '';
+  const res = await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:q,history})});
+  const rd = res.body.getReader(), dec = new TextDecoder(); let buf='';
+  while(true){ const {value,done} = await rd.read(); if(done) break; buf += dec.decode(value,{stream:true});
+    let i; while((i = buf.indexOf('\n\n'))>=0){ const line = buf.slice(0,i); buf = buf.slice(i+2);
+      if(!line.startsWith('data: ')) continue; const ev = JSON.parse(line.slice(6));
+      if(ev.type==='delta'){ text += ev.text; box.querySelector('.ans').innerHTML = md(text); }
+      else if(ev.type==='tool_call'){ box.querySelector('.tools').insertAdjacentHTML('beforeend', `🔧 ${esc(ev.name)} `); }
+      else if(ev.type==='trend'){ const d=ev.data; box.querySelector('.charts').insertAdjacentHTML('beforeend',
+          `<div style="margin-top:8px"><div class="muted" style="font-size:12px">${esc(d.metric)} · ${esc(d.segment)} · ${chip(d.asset_key)}</div>${sparkline(d.series)}</div>`); }
+      else if(ev.type==='done'){ box.querySelector('.meta').textContent = `${ev.latency_s}s · data as of ${ev.as_of||''}`; }
+      else if(ev.type==='error'){ box.querySelector('.ans').innerHTML = `<span class="sev-high">${esc(ev.message)}</span>`; }
+    }}
+  history.push({role:'user',content:q},{role:'assistant',content:text});
+};
+</script>
+{% endblock %}

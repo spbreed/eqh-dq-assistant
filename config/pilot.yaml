@@ -1,0 +1,62 @@
+# Non-secret pilot settings only. Never put credentials here.
+project: eqh-dq-assistant
+env: pilot
+account_id: "761705103792"
+region: us-east-1
+owner: karthik.ramamurthy@emergertech.com
+
+budget:
+  monthly_usd: 300
+  alert_thresholds_pct: [50, 80, 100]   # ACTUAL; plus a FORECASTED 100% alert
+  alert_emails:
+    - RC@emergertech.com
+    - karthik.ramamurthy@emergertech.com
+  # Hard-ish limit: at 100% ACTUAL, AWS Budgets automatically attaches a deny policy to the
+  # project's workload roles (Bedrock, ECS RunTask, Redshift Data, Step Functions).
+  enforce_deny_at_pct: 100
+
+models:
+  # Target per SPEC: openai.gpt-5.6-terra / -luna / -sol. Their Marketplace agreements are accepted, but AWS
+  # still returns "not available for this account" for every GPT-5.x/6 model (account-level gating; contact AWS).
+  # Until AWS enables them the pilot runs on OpenAI's open-weight gpt-oss-120b, also via the bedrock-mantle
+  # Responses API. Switching back is this block only. See docs/DECISIONS.md D-03.
+  chat: openai.gpt-oss-120b
+  enrich: openai.gpt-oss-120b
+  judge: openai.gpt-oss-120b
+  target_models: {chat: openai.gpt-5.6-terra, enrich: openai.gpt-5.6-luna, judge: openai.gpt-5.6-sol}
+  embed: amazon.titan-embed-text-v2:0   # documented exception: no OpenAI embedding model on Bedrock
+  embed_dim: 1024
+  # OpenAI-compatible Responses API. bedrock-mantle (*.api.aws) for workloads that sign SigV4 themselves;
+  # the bedrock-runtime /openai/v1 route is used when calls go through a signing proxy.
+  mantle_base_url: https://bedrock-mantle.us-east-1.api.aws/v1          # gpt-oss models
+  mantle_openai_base_url: https://bedrock-mantle.us-east-1.api.aws/openai/v1   # GPT-5.x / GPT-6 models
+  runtime_openai_base_url: https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1
+
+network:
+  nat_gateways: 1
+  endpoint_azs: 1            # interface endpoints in one AZ to keep the pilot under budget
+
+redshift:
+  database: eqh
+  base_rpu: 8
+  max_rpu: 16
+  monthly_rpu_hour_limit: 300   # usage limit; workgroup is deactivated when breached
+
+aurora:
+  engine_version: "16.13"
+  min_acu: 0.5
+  max_acu: 4
+
+assistant:
+  cpu: 512
+  memory: 1024
+  allowed_cidrs: ["0.0.0.0/0"]   # tighten to office/VPN CIDRs before sharing the URL
+
+pipeline:
+  schedule_cron: "cron(0 6 * * ? *)"
+  schedule_tz: America/Phoenix
+
+simulation:
+  seed: 20261005
+  day0_date: "2026-10-05"     # day 21 = 2026-10-26
+  days: 21

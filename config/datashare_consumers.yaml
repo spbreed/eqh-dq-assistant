@@ -1,0 +1,3 @@
+# Consumers of each outbound datashare (consumer namespaces live in other accounts in production).
+eqh_actuarial_share: {consumer: actuarial-namespace, team: Actuarial & risk analytics}
+eqh_finance_share: {consumer: finance-namespace, team: Finance (settlements & incentives)}

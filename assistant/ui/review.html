@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Steward review queue</h2><p class="muted">AI drafts awaiting approval. Approving writes the steward description to the metadata store only (never to Glue or Redshift) and is audited.</p>
+<div id="qq">Loading…</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function load(){
+  const r = await (await fetch('/api/review')).json(); const el = document.getElementById('qq');
+  if(!r.queue.length){ el.innerHTML='<p class="muted">Nothing to review.</p>'; return; }
+  el.innerHTML = r.queue.map((a,i)=>`<div class="card"><div>${chip(a.asset_key)} <span class="muted">${esc(a.asset_type)} · ${esc(a.business_domain||'')}</span></div>
+    <p class="muted" style="font-size:13px">Source comment: ${esc(a.source_comment||'—')}</p>
+    ${(a.ai_meta.doc_issues||[]).length?`<p><span class="label ai">Doc issues</span> ${(a.ai_meta.doc_issues).map(esc).join('; ')}</p>`:''}
+    <span class="label ai">AI draft – not yet approved</span> <span class="muted" style="font-size:12px">confidence ${esc(a.ai_meta.confidence??'')}</span>
+    <textarea id="t${i}" rows="4">${esc(a.ai_description)}</textarea>
+    <details><summary class="muted">Column drafts (${a.columns.filter(c=>c.ai_description).length})</summary><table>${a.columns.map(c=>`<tr><td><code>${esc(c.column_name)}</code></td><td>${esc(c.ai_description||'')}</td></tr>`).join('')}</table></details>
+    <div style="display:flex;gap:8px;margin-top:8px"><button onclick="act(${i},'approve')">Approve</button><button class="ghost" onclick="act(${i},'edit_approve')">Save edit &amp; approve</button><button class="danger" onclick="act(${i},'reject')">Reject</button></div></div>`).join('');
+  window._q = r.queue;
+}
+async function act(i, action){
+  const a = window._q[i]; const text = document.getElementById('t'+i).value;
+  await fetch('/api/review',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({asset_key:a.asset_key,action,text})});
+  load();
+}
+load();
+</script>
+{% endblock %}
