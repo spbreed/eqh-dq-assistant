@@ -178,8 +178,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/practice_shared_savings_calc
   facts:
-  - practice_shared_savings_calc undocumented
-  - core.member comment is outdated (chw_assigned_id)
+  - includes practice_shared_savings_calc as undocumented (other undocumented marts may also be listed)
+  - core.member documentation is outdated (comment mentions chw_assigned_id, which does not exist)
   refusal: false
   forbidden: []
 - id: B7-13
@@ -232,7 +232,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/pmpm_cost_by_practice
   facts:
-  - recommends eqh/vbc_mart/pmpm_cost_by_practice
+  - recommends eqh/vbc_mart/pmpm_cost_by_practice or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-02
@@ -246,7 +247,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/member_month
   facts:
-  - recommends eqh/vbc_mart/member_month
+  - recommends eqh/vbc_mart/member_month or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-03
@@ -260,7 +262,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/quality_gap_closure_by_measure
   facts:
-  - recommends eqh/vbc_mart/quality_gap_closure_by_measure
+  - recommends eqh/vbc_mart/quality_gap_closure_by_measure or a curated Redshift view/mart built on it (vbc_mart / careempower
+    / outbound), not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-04
@@ -274,7 +277,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/practice_scorecard
   facts:
-  - recommends eqh/vbc_mart/practice_scorecard
+  - recommends eqh/vbc_mart/practice_scorecard or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-05
@@ -288,7 +292,8 @@ questions:
   must_cite:
   - redshift://eqh/careempower/open_care_gaps
   facts:
-  - recommends eqh/careempower/open_care_gaps
+  - recommends eqh/careempower/open_care_gaps or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-06
@@ -302,7 +307,8 @@ questions:
   must_cite:
   - redshift://eqh/core/member_risk_score
   facts:
-  - recommends eqh/core/member_risk_score
+  - recommends eqh/core/member_risk_score or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-07
@@ -316,7 +322,8 @@ questions:
   must_cite:
   - redshift://eqh/core/rx_claim
   facts:
-  - recommends eqh/core/rx_claim
+  - recommends eqh/core/rx_claim or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound), not a raw
+    feed
   refusal: false
   forbidden: []
 - id: DISC-08
@@ -330,7 +337,8 @@ questions:
   must_cite:
   - redshift://eqh/core/adt_event
   facts:
-  - recommends eqh/core/adt_event
+  - recommends eqh/core/adt_event or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound), not a raw
+    feed
   refusal: false
   forbidden: []
 - id: DISC-09
@@ -344,7 +352,8 @@ questions:
   must_cite:
   - redshift://eqh/core/pcp_assignment
   facts:
-  - recommends eqh/core/pcp_assignment
+  - recommends eqh/core/pcp_assignment or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound), not
+    a raw feed
   refusal: false
   forbidden: []
 - id: DISC-10
@@ -358,7 +367,8 @@ questions:
   must_cite:
   - redshift://eqh/core/practice_incentive_payment
   facts:
-  - recommends eqh/core/practice_incentive_payment
+  - recommends eqh/core/practice_incentive_payment or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound),
+    not a raw feed
   refusal: false
   forbidden: []
 - id: DISC-11
@@ -372,7 +382,8 @@ questions:
   must_cite:
   - redshift://eqh/core/payer_gap_file
   facts:
-  - recommends eqh/core/payer_gap_file
+  - recommends eqh/core/payer_gap_file or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound), not
+    a raw feed
   refusal: false
   forbidden: []
 - id: DISC-12
@@ -386,7 +397,8 @@ questions:
   must_cite:
   - redshift://eqh/core/chw_encounter
   facts:
-  - recommends eqh/core/chw_encounter
+  - recommends eqh/core/chw_encounter or a curated Redshift view/mart built on it (vbc_mart / careempower / outbound), not
+    a raw feed
   refusal: false
   forbidden: []
 - id: EXPL-01
@@ -397,6 +409,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/vbc_mart/member_month
   facts:
@@ -412,6 +425,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/careempower/panel_member_risk
   facts:
@@ -427,6 +441,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/outbound/careempower_panel_feed
   facts:
@@ -442,6 +457,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/vbc_mart/hah_outcomes
   facts:
@@ -457,6 +473,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/core/eligibility_span
   facts:
@@ -472,6 +489,7 @@ questions:
   expect_tools:
   - get_asset
   - get_lineage
+  - search_assets
   must_cite:
   - redshift://eqh/vbc_mart/v_member_lab_measures
   facts:
@@ -563,8 +581,7 @@ questions:
   must_cite:
   - redshift://eqh/careempower/open_care_gaps
   facts:
-  - outbound.practice_gap_list
-  - outbound.careempower_panel_feed
+  - includes outbound.practice_gap_list and outbound.careempower_panel_feed; deeper transitive consumers/extracts are fine
   refusal: false
   forbidden: []
 - id: LIN-03
@@ -578,8 +595,8 @@ questions:
   must_cite:
   - redshift://eqh/vbc_mart/member_month
   facts:
-  - eqh_actuarial_share
-  - actuarial consumer
+  - only eqh_actuarial_share includes it
+  - consumed by the actuarial team / namespace
   refusal: false
   forbidden: []
 - id: LIN-04
@@ -872,7 +889,7 @@ questions:
   - get_asset
   must_cite: []
   facts:
-  - answers from documentation/usage metadata
+  - many assets (100+) have AI drafts awaiting steward approval; names several of them
   refusal: false
   forbidden: []
 - id: GOV-02
@@ -882,10 +899,11 @@ questions:
   - analyst
   expect_tools:
   - get_asset
+  - list_undocumented_assets
   must_cite:
   - redshift://eqh/core/member
   facts:
-  - answers from documentation/usage metadata
+  - 'no: the table comment mentions chw_assigned_id, which is not a column (outdated)'
   refusal: false
   forbidden: []
 - id: GOV-03
@@ -897,7 +915,8 @@ questions:
   - list_undocumented_assets
   must_cite: []
   facts:
-  - answers from documentation/usage metadata
+  - vbc_mart objects without table comments include practice_shared_savings_calc, member_month, pmpm_cost_by_practice, quality_gap_closure_by_measure,
+    v_member_lab_measures, v_rx_controller_fills
   refusal: false
   forbidden: []
 - id: GOV-04
@@ -908,10 +927,12 @@ questions:
   expect_tools:
   - get_asset
   - list_unused_assets
+  - get_lineage
+  - impact_of_change
   must_cite:
   - redshift://eqh/vbc_mart/legacy_pmpm_2023
   facts:
-  - answers from documentation/usage metadata
+  - 'not used: no reads and no downstream dependents (retirement candidate)'
   refusal: false
   forbidden: []
 - id: ENT-01
@@ -979,7 +1000,7 @@ questions:
   - redshift://eqh/core/sdoh_screening
   facts:
   - 'actual columns: screening_id, member_id, screening_date, z_code, need_category, referral_made, screening_tool, ingest_date'
-  - 'Z-code quality: ~5% invalid Z-codes in recent screenings (rule_failed / invalid_values)'
+  - 'Z-code quality: invalid Z-codes in recent screenings (several percent; rule_failed / invalid_values)'
   refusal: false
   forbidden: []
 - id: REF-01

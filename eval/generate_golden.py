@@ -67,7 +67,8 @@ def demo() -> list[dict]:
           ["core.health_at_home_episode and vbc_mart.hah_outcomes", "outbound.payer_hah_report / BI consumers"]),
         q("B7-12", "governance", "Which gold-layer assets are undocumented or have outdated documentation?",
           ["list_undocumented_assets"], [f"{RS}/vbc_mart/practice_shared_savings_calc"],
-          ["practice_shared_savings_calc undocumented", "core.member comment is outdated (chw_assigned_id)"]),
+          ["includes practice_shared_savings_calc as undocumented (other undocumented marts may also be listed)",
+           "core.member documentation is outdated (comment mentions chw_assigned_id, which does not exist)"]),
         q("B7-13", "governance", "Which assets haven't been read in 30 days?", ["list_unused_assets"],
           [f"{RS}/vbc_mart/legacy_pmpm_2023"], ["vbc_mart.legacy_pmpm_2023 is not read (retirement candidate); "
                                                "never-read core reference tables may also be listed"]),
@@ -97,14 +98,16 @@ def generated() -> list[dict]:
     ]
     for i, (what, key) in enumerate(disc, 1):
         out.append(q(f"DISC-{i:02d}", "discovery", f"Which dataset should I use for {what}?",
-                     ["search_assets", "get_asset"], [key], [f"recommends {key.split('//', 1)[1]}"]))
+                     ["search_assets", "get_asset"], [key],
+                     [f"recommends {key.split('//', 1)[1]} or a curated Redshift view/mart built on it "
+                      "(vbc_mart / careempower / outbound), not a raw feed"]))
     # explanation
     expl = ["vbc_mart.member_month", "careempower.panel_member_risk", "outbound.careempower_panel_feed",
             "vbc_mart.hah_outcomes", "core.eligibility_span", "vbc_mart.v_member_lab_measures"]
     for i, name in enumerate(expl, 1):
         sch, obj = name.split(".")
         out.append(q(f"EXPL-{i:02d}", "explanation", f"What is {name} and what is it built from?",
-                     ["get_asset", "get_lineage"], [f"{RS}/{sch}/{obj}"],
+                     ["get_asset", "get_lineage", "search_assets"], [f"{RS}/{sch}/{obj}"],
                      ["describes purpose", "names its upstream tables"]))
     for i, term in enumerate(["PMPM", "Health at Home", "redetermination", "Z-code", "shared savings"], 1):
         out.append(q(f"GLOS-{i:02d}", "explanation", f"What does {term} mean here?", ["search_glossary"], [],
@@ -114,9 +117,10 @@ def generated() -> list[dict]:
         ("What feeds core.claim_header upstream?", ["get_lineage"], [f"{RS}/core/claim_header"],
          ["silver claim_header and payer raw claim feeds (e.g. raw_la1_clm_extract)"]),
         ("What is downstream of careempower.open_care_gaps?", ["get_lineage", "impact_of_change"],
-         [f"{RS}/careempower/open_care_gaps"], ["outbound.practice_gap_list", "outbound.careempower_panel_feed"]),
+         [f"{RS}/careempower/open_care_gaps"], ["includes outbound.practice_gap_list and outbound.careempower_panel_feed; "
+                                                  "deeper transitive consumers/extracts are fine"]),
         ("Which datashares include vbc_mart.member_month and who consumes them?", ["get_lineage", "get_asset"],
-         [f"{RS}/vbc_mart/member_month"], ["eqh_actuarial_share", "actuarial consumer"]),
+         [f"{RS}/vbc_mart/member_month"], ["only eqh_actuarial_share includes it", "consumed by the actuarial team / namespace"]),
         ("What would break if core.eligibility_span changed?", ["impact_of_change"],
          [f"{RS}/core/eligibility_span"], ["member_month and downstream marts / actuarial datashare"]),
         ("Trace column-level lineage of lab_result.result_value downstream.", ["get_lineage", "impact_of_change"],
@@ -162,13 +166,18 @@ def generated() -> list[dict]:
         forbidden = SDOH_CONTENT if "SDoH" in text else []
         out.append(q(f"DQ-{i:02d}", "dq", text, tools, cite, facts, groups, forbidden=forbidden))
     # governance
-    gov = [("List assets with AI drafts that still need steward approval.", ["list_undocumented_assets", "get_asset"], []),
-           ("Is the core.member documentation accurate?", ["get_asset"], [f"{RS}/core/member"]),
-           ("Which marts have no table comments?", ["list_undocumented_assets"], []),
-           ("Is vbc_mart.legacy_pmpm_2023 still used?", ["get_asset", "list_unused_assets"],
-            [f"{RS}/vbc_mart/legacy_pmpm_2023"])]
-    for i, (text, tools, cite) in enumerate(gov, 1):
-        out.append(q(f"GOV-{i:02d}", "governance", text, tools, cite, ["answers from documentation/usage metadata"]))
+    gov = [("List assets with AI drafts that still need steward approval.", ["list_undocumented_assets", "get_asset"], [],
+            ["many assets (100+) have AI drafts awaiting steward approval; names several of them"]),
+           ("Is the core.member documentation accurate?", ["get_asset", "list_undocumented_assets"], [f"{RS}/core/member"],
+            ["no: the table comment mentions chw_assigned_id, which is not a column (outdated)"]),
+           ("Which marts have no table comments?", ["list_undocumented_assets"], [],
+            ["vbc_mart objects without table comments include practice_shared_savings_calc, member_month, "
+             "pmpm_cost_by_practice, quality_gap_closure_by_measure, v_member_lab_measures, v_rx_controller_fills"]),
+           ("Is vbc_mart.legacy_pmpm_2023 still used?", ["get_asset", "list_unused_assets", "get_lineage",
+                                                        "impact_of_change"], [f"{RS}/vbc_mart/legacy_pmpm_2023"],
+            ["not used: no reads and no downstream dependents (retirement candidate)"])]
+    for i, (text, tools, cite, facts) in enumerate(gov, 1):
+        out.append(q(f"GOV-{i:02d}", "governance", text, tools, cite, facts))
     # entitlement
     ent = [("analyst", "What columns are in core.sdoh_screening?", True),
            ("analyst", "Describe the SDoH screening data and its Z-code quality.", True),
@@ -178,7 +187,8 @@ def generated() -> list[dict]:
         groups = ("analyst",) if grp == "analyst" else ("analyst", "restricted_bh")
         facts = (["explains the data is restricted to restricted_bh and does not reveal columns or quality details"]
                  if hide else [f"actual columns: {', '.join(SDOH_COLS)}",
-                               "Z-code quality: ~5% invalid Z-codes in recent screenings (rule_failed / invalid_values)"
+                               "Z-code quality: invalid Z-codes in recent screenings (several percent; rule_failed / "
+                               "invalid_values)"
                                if "Z-code" in text else "lists the columns"])
         out.append(q(f"ENT-{i:02d}", "entitlement", text, ["get_asset", "search_assets", "get_dq_issues"],
                      [] if hide else [SDOH], facts, groups, forbidden=SDOH_CONTENT if hide else []))

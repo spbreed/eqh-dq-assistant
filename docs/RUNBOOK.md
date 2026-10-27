@@ -44,8 +44,9 @@ was loaded but its chain did not run: `python -m datagen.simulate chain <day>`.
 
 ## 4. Assistant
 - URL: `aws cloudformation describe-stacks --stack-name EqhDqAssistant --query "Stacks[0].Outputs[?OutputKey=='Url'].OutputValue" --output text`
-- Demo users: `demo-analyst`, `demo-steward`, `demo-actuary`, `demo-bh-analyst`. Passwords live in Secrets Manager
-  `eqh-dq/cognito/<user>` (open the secret in the console → *Retrieve secret value*). Add real users in the Cognito
+- Demo users: `demo-analyst`, `demo-steward`, `demo-actuary`, `demo-bh-analyst`. Passwords are generated into Secrets
+  Manager `eqh-dq/cognito/<user>` and applied with `python scripts/set_demo_passwords.py` after each deploy of
+  `EqhDqAssistant` (open the secret in the console → *Retrieve secret value* to sign in). Add real users in the Cognito
   console (user pool `eqh-dq-assistant`) and put them in groups `analyst` / `steward` / `actuarial` / `restricted_bh`.
 - Logs: CloudWatch `/eqh-dq/assistant`; dashboard `eqh-dq-assistant`.
 - Redeploy after code changes: `make image && make deploy STACK=EqhDqAssistant`.

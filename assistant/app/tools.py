@@ -402,7 +402,18 @@ def get_dq_issues(ctx: Ctx, asset_key: str | None = None, domain: str | None = N
     out.sort(key=lambda x: x["_rank"])
     for o in out:
         o.pop("_rank")
-    return {"as_of": ctx.as_of.date().isoformat(), "issues": out,
+    hidden = sum(1 for r in rows if not ctx.visible(r["asset_key"]))
+    extra = {}
+    if hidden:
+        extra["notice"] = (f"{hidden} issue(s) are on restricted_bh assets and are hidden. Tell the user that some "
+                           "results are restricted.")
+    if not out and (asset_key or domain or state or payer or issue_type or since):
+        # filters matched nothing: show what IS open so the model doesn't conclude "no issues" from a bad filter
+        others = ctx.db.query("""select asset_key, issue_type, segment, severity from dq_issue where status='open'
+                                 order by first_detected desc limit 40""")
+        extra["no_match_for_filters"] = True
+        extra["other_open_issues"] = [o for o in others if ctx.visible(o["asset_key"])][:25]
+    return {"as_of": ctx.as_of.date().isoformat(), "issues": out, **extra,
             "ranking": "outbound payer submissions > CareEmpower feeds > practice deliveries > finance datashares "
                        "> actuarial datashares > internal marts; then severity"}
 
@@ -427,6 +438,18 @@ def get_dq_trend(ctx: Ctx, asset_key: str, metric: str, column: str | None = Non
                              and measured_at >= :start::timestamptz order by measured_at""",
                         {"k": asset_key, "m": metric, "c": column or "", "s": segment or "",
                          "start": (ctx.as_of - timedelta(days=int(days or 21))).isoformat()})
+    if metric == "row_count" and rows:  # volume questions: the per-day series is what users mean
+        daily = ctx.db.query("""select measured_at::date as day, value from dq_metric
+                                where asset_key = :k and metric = 'daily_rows' and column_name = '' and segment = :s
+                                  and measured_at >= :start::timestamptz order by measured_at""",
+                             {"k": asset_key, "s": segment or "",
+                              "start": (ctx.as_of - timedelta(days=int(days or 21))).isoformat()})
+        if daily:
+            return {"asset_key": asset_key, "metric": "daily_rows", "column": column, "segment": segment or "(all)",
+                    "note": "row_count is the cumulative table size; daily_rows (rows received per day) is shown "
+                            "because it is what volume questions need.",
+                    "series": [{"day": str(r["day"]), "value": r["value"]} for r in daily],
+                    "cumulative_row_count_last": rows[-1]["value"]}
     avail = ctx.db.query("""select distinct metric, column_name, segment from dq_metric where asset_key = :k
                             and (metric = :m or :m = '') order by 1,2,3 limit 60""",
                          {"k": asset_key, "m": metric}) if not rows else []
@@ -470,7 +493,7 @@ def list_undocumented_assets(ctx: Ctx, domain: str | None = None, include_outdat
             continue
         issues = r["doc_issues"] if isinstance(r["doc_issues"], list) else json.loads(r["doc_issues"] or "[]")
         if r["no_comment"] and r["no_steward"]:
-            undocumented.append({"asset_key": r["asset_key"], "domain": r["business_domain"],
+            undocumented.append({"asset_key": r["asset_key"], "domain": r["business_domain"], "table_comment": None,
                                  "columns_commented": f"{r['n_cols_commented']}/{r['n_cols']}",
                                  "ai_draft_status": r["ai_description_status"]})
         if include_outdated and issues:
@@ -563,9 +586,9 @@ SPECS = [
       "issue_type": {"type": ["string", "null"], "enum": ["stale", "volume_anomaly", "null_spike", "duplicates",
                                                           "ri_orphans", "overlap", "invalid_values", "rule_failed",
                                                           "schema_drift", None]}}, []),
-    ("get_dq_trend", "Daily time series of a DQ metric (row_count, daily_rows, null_rate, dup_rate, ri_orphan_rate, "
-                     "overlap_rate, invalid_value_rate, hours_since_last_ingest). segment like 'state=LA' or "
-                     "'payer_code=PAYER_TX2'.",
+    ("get_dq_trend", "Daily time series of a DQ metric. Use daily_rows for volume (rows received per day; row_count is "
+                     "the cumulative size), null_rate (with column), dup_rate, ri_orphan_rate, overlap_rate, "
+                     "invalid_value_rate, hours_since_last_ingest. segment like 'state=LA' or 'payer_code=PAYER_TX2'.",
      {"asset_key": _S, "metric": _S, "column": _ns, "segment": _ns, "days": {"type": ["integer", "null"]}},
      ["asset_key", "metric"]),
     ("get_schema_changes", "Schema drift log (columns added/removed, type changes). since accepts '7d'.",

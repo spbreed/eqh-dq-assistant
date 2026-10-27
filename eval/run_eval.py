@@ -45,7 +45,7 @@ def judge(q: dict, answer: str) -> dict:
         ok = bool(REFUSAL_RE.search(answer))
         return {"score": 1.0 if ok else 0.0, "correct": ok, "reason": "refusal check"}
     payload = {"question": q["question"], "rubric_facts": q["facts"], "answer": answer[:6000]}
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             r = llm.respond("judge", json.dumps(payload), instructions=JUDGE_INSTRUCTIONS, json_schema=JUDGE,
                             max_output_tokens=1500, reasoning_effort="low")
