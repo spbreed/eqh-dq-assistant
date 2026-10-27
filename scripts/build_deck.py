@@ -24,17 +24,11 @@ sys.path.insert(0, str(ROOT))
 from jobs.common import settings  # noqa: E402
 from jobs.common.db import MetaDB  # noqa: E402
 
-SAMPLES = [  # (eval id, persona label, why it matters)
-    ("B7-01", "demo-analyst", "Discovery: picks the curated mart and explains the AZ / Medicaid filters."),
-    ("B7-03", "demo-analyst", "Explanation of an undocumented finance view (D09) — decodes cryptic columns from lineage."),
-    ("B7-04", "demo-analyst", "Column-level impact through late-binding views (D05 → D11) to the payer submission."),
-    ("B7-05", "demo-steward", "Seven-day triage, ranked by downstream impact on payer submissions."),
-    ("B7-06", "demo-analyst", "Segmented volume anomaly (state / payer) traced to the PAYER_LA1 feed (D07)."),
-    ("B7-07", "demo-analyst", "Freshness + dependency: stale Tennessee HIE ADT feed (D03)."),
-    ("B7-09", "demo-analyst", "Duplicates by payer (D02) — profiler + Glue DQ IsUnique."),
-    ("B7-12", "demo-steward", "Governance: undocumented gold assets (D09) and outdated docs (D10)."),
-    ("B7-14", "demo-analyst", "Entitlements: SDoH is restricted_bh — results hidden, with an explanation."),
-    ("B7-15", "demo-analyst", "Read-only guardrail: polite refusal, offers safe alternatives."),
+SAMPLES = [  # (eval id, persona, why it matters) — two per slide
+    ("B7-06", "demo-analyst", "Volume drop traced by payer/state segment to the PAYER_LA1 feed"),
+    ("B7-04", "demo-analyst", "Column-level impact through late-binding views to the payer submission"),
+    ("B7-05", "demo-steward", "7-day triage ranked by impact on payer submissions"),
+    ("B7-09", "demo-analyst", "Duplicates found and attributed to the payer (PAYER_AZ2 resent a file)"),
 ]
 FOOT = '<div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>'
 
@@ -46,6 +40,7 @@ def data_uri(p: Path) -> str:
 
 def answer_html(text: str, limit: int = 2200) -> str:
     t = text.strip()
+    t = re.sub(r"\n{3,}", "\n\n", t)
     if len(t) > limit:
         t = t[:limit].rsplit("\n", 1)[0] + "\n\n…"
     h = markdown.markdown(t, extensions=["tables"])
@@ -90,8 +85,7 @@ def main() -> None:
             status = f'<span class="pill bad">{exp} · not detected</span>'
         else:
             status = f'<span class="pill">{exp.replace("_", " ")}</span>'
-        rows.append(f"<tr><td><b>{d['id']}</b></td><td>{html.escape(d['description'])}</td>"
-                    f"<td>{html.escape(d['business_impact'])}</td><td>{status}</td><td>{d['inject_on_day']}</td></tr>")
+        rows.append(f"<tr><td><b>{d['id']}</b> {html.escape(d['description'])}</td><td>{status}</td></tr>")
     n_issue_types = sum(1 for d in truth if d["expected_detection"] in det_map)
 
     sec = [("Budget $300 + alerts + automatic deny", True), ("No public S3; KMS encryption on all buckets", True),
@@ -119,25 +113,25 @@ def main() -> None:
     cats = "<tr><th>Category</th><th>n</th><th>Correct</th></tr>" + "".join(
         f"<tr><td>{c}</td><td>{v['n']}</td><td>{100 * v['correct']:.0f}%</td></tr>" for c, v in sm["by_category"].items())
 
-    slides, pg = [], 21
-    for qid, who, why in SAMPLES:
+    def card(qid, who, why):
         r = rows_by_id.get(qid)
         if not r:
-            continue
-        tools = ", ".join(r["tools_called"]) or "— (refused before any tool call)"
-        verdict = "✔ judged correct" if r["correct"] else "✘ judged incorrect"
+            return ""
+        tools = ", ".join(r["tools_called"]) or "none (refused before any tool call)"
+        return f"""<div class="qa"><div class="q"><div class="who">{who}</div>
+          <div class="text">“{html.escape(r['question'])}”</div>
+          <div class="meta">Tools: {html.escape(tools)} · {r['latency_s']} s · {'✔ correct' if r['correct'] else '✘ incorrect'}</div></div>
+          <div class="a">{answer_html(r['answer'], 1100)}</div><div class="why">{html.escape(why)}</div></div>"""
+
+    slides = []
+    for i, pg in ((0, 12), (2, 13)):
+        pair = "".join(card(*x) for x in SAMPLES[i:i + 2])
         slides.append(f"""
 <section>
-  <div class="hdr"><div class="bar"></div><h2>Sample prompt · {qid}</h2><img class="mark" src="{{{{MARK}}}}" alt=""></div><div class="rule"></div>
-  <div class="body"><div class="qa">
-    <div class="q"><div class="who">{who} · groups {', '.join(r['groups'])}</div><div class="text">“{html.escape(r['question'])}”</div>
-      <div class="meta">Tools: {html.escape(tools)}<br>Latency: {r['latency_s']} s · {verdict}</div>
-      <div class="meta" style="color:#fff;font-size:.6em;margin-top:16px;border-top:1px solid #45428a;padding-top:10px">{html.escape(why)}</div></div>
-    <div class="a">{answer_html(r['answer'])}</div>
-  </div></div>
+  <div class="hdr"><div class="bar"></div><h2>Sample prompts &amp; real responses ({pg - 11}/2)</h2><img class="mark" src="{{{{MARK}}}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="qa2">{pair}</div></div>
   <div class="pg">{pg}</div>{FOOT}
 </section>""")
-        pg += 1
 
     shots = ROOT / "docs" / "screenshots"
     rep = {
@@ -153,9 +147,12 @@ def main() -> None:
                                  f"dependency, unused asset) are answered through governance and lineage tools."),
         "{{SHOT_CHAT}}": data_uri(shots / "analyst-chat.png"), "{{SHOT_ASSET}}": data_uri(shots / "analyst-asset.png"),
         "{{SHOT_REVIEW}}": data_uri(shots / "steward-review.png"),
-        "{{PG_NEXT}}": str(pg),
     }
     out = tpl.replace("{{SAMPLE_SLIDES}}", "\n".join(slides))
+    icons = ROOT / "docs" / "deck" / "icons"
+    for name in set(re.findall(r"\{\{ICON:([A-Za-z0-9]+)\}\}", out)):
+        svg = (icons / f"{name}.svg").read_bytes()
+        out = out.replace("{{ICON:" + name + "}}", "data:image/svg+xml;base64," + base64.b64encode(svg).decode())
     for k, v in rep.items():
         out = out.replace(k, v)
     (ROOT / "eqh-dq-assistant.html").write_text(out)
