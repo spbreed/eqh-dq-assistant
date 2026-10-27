@@ -550,4 +550,5 @@ in `docs/DECISIONS.md`; every resource is listed with console links in `Resource
 - [x] Security self-check passes for all pilot controls (it flags a non-pilot IAM user key older than 30 days); budget active.
 - [x] `make destroy` implemented (typed confirmation, buckets, snapshots, rulesets, `cdk destroy --all`, leftover check).
 - [x] `docs/` contains DECISIONS, RUNBOOK, DEMO_SCRIPT, COSTS.
-- [ ] Eval targets on GPT‑5.6 — pending AWS enablement; gpt-oss baseline results in `eval/report.html`.
+- [x] Eval targets met on `gpt-oss-120b` (74 questions): 91.9 % correct, 96.3 % citation precision, 100 % refusal and
+      entitlement, p95 9.0 s (`eval/report.html`). Re-run on GPT‑5.6 once AWS enables it.

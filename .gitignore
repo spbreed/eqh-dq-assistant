@@ -10,5 +10,4 @@ build/
 out/
 *.parquet
 .pytest_cache/
-eval/report.html
 eval/results/

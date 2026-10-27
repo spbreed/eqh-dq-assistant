@@ -13,21 +13,32 @@ from jobs.common import settings
 from jobs.common.db import MetaDB
 
 
-def queue(limit: int = 100) -> list[dict]:
+def queue(groups: list[str], limit: int = 100) -> list[dict]:
+    """Drafts awaiting review, filtered by the steward's entitlements (restricted_bh assets need that group)."""
+    from assistant.app.tools import Ctx
     db = MetaDB(role="assistant")
+    ctx = Ctx(groups, db)
     rows = db.query("""select asset_key, asset_type, business_domain, source_comment, ai_description, ai_meta,
                               updated_at from asset where ai_description_status = 'draft' and not is_deleted
-                       order by business_domain nulls last, asset_key limit :n""", {"n": limit})
+                       order by business_domain nulls last, asset_key""")
+    rows = [r for r in rows if ctx.visible(r["asset_key"])][:limit]
+    cols: dict[str, list] = {}
+    for c in db.query("""select a.asset_key, c.column_name, c.data_type, c.source_comment, c.ai_description
+                         from asset_column c join asset a using (asset_id)
+                         where a.asset_key in (select jsonb_array_elements_text(:keys::jsonb))
+                         order by a.asset_key, c.ordinal""", {"keys": [r["asset_key"] for r in rows]}):
+        cols.setdefault(c.pop("asset_key"), []).append(c)
     for r in rows:
         r["ai_meta"] = r["ai_meta"] if isinstance(r["ai_meta"], dict) else json.loads(r["ai_meta"] or "{}")
-        r["columns"] = db.query("""select c.column_name, c.data_type, c.source_comment, c.ai_description
-                                   from asset_column c join asset a using (asset_id) where a.asset_key = :k
-                                   order by c.ordinal""", {"k": r["asset_key"]})
+        r["columns"] = cols.get(r["asset_key"], [])
     return rows
 
 
-def act(asset_key: str, action: str, reviewer: str, text: str | None = None) -> dict:
+def act(asset_key: str, action: str, reviewer: str, text: str | None = None, groups: list[str] | None = None) -> dict:
+    from assistant.app.tools import Ctx
     db = MetaDB(role="assistant")
+    if groups is not None and not Ctx(groups, db).visible(asset_key):
+        return {"error": "not_entitled"}
     cur = db.query("select ai_description, steward_description, platform, asset_type, schema_name, object_name, "
                    "business_domain from asset where asset_key = :k", {"k": asset_key})
     if not cur:

@@ -1,6 +1,6 @@
 # Resources — EQH DQ Assistant pilot
 
-AWS account `761705103792`, region `us-east-1`. All resources are tagged `project=eqh-dq-assistant`, `env=pilot`, `owner=karthik.ramamurthy@emergertech.com`, `data=synthetic` and are created by the CDK app in `infra/` (regenerate this file with `python scripts/gen_resources.py`). Generated 2026-10-27 21:46 UTC.
+AWS account `761705103792`, region `us-east-1`. All resources are tagged `project=eqh-dq-assistant`, `env=pilot`, `owner=karthik.ramamurthy@emergertech.com`, `data=synthetic` and are created by the CDK app in `infra/` (regenerate this file with `python scripts/gen_resources.py`). Generated 2026-10-27 22:42 UTC.
 
 ## Entry points
 
@@ -98,7 +98,7 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 | `ECR::Repository` | Repo02AC86CF | `eqh-dq-assistant` | [open](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/761705103792/eqh-dq-assistant?region=us-east-1) |
 | `IAM::Role` | BuildRoleB7C66CB2 | `EqhDqImage-BuildRoleB7C66CB2-XM9HmLgaukwf` | [open](https://console.aws.amazon.com/iam/home#/roles/details/EqhDqImage-BuildRoleB7C66CB2-XM9HmLgaukwf) |
 
-**Outputs:** `BuildProject` = `eqh-dq-image-build`; `ImageTag` = `4f4901e21155e17e`; `RepoUri` = `761705103792.dkr.ecr.us-east-1.amazonaws.com/eqh-dq-assistant`
+**Outputs:** `BuildProject` = `eqh-dq-image-build`; `ImageTag` = `c2a06fdf61f3bf73`; `RepoUri` = `761705103792.dkr.ecr.us-east-1.amazonaws.com/eqh-dq-assistant`
 
 ## EqhDqDataPlatform (31 CloudFormation resources)
 
@@ -151,11 +151,11 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 | `CloudWatch::Alarm` | PipelineFailedAlarm321C49A8 | `eqh-dq-daily-failed` | [open](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#alarmsV2:alarm/eqh-dq-daily-failed) |
 | `EC2::SecurityGroup` | TaskSgFD7B04A0 | `sg-07ef5a61892e55a75` | [open](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroup:groupId=sg-07ef5a61892e55a75) |
 | `ECS::Cluster` | ClusterEB0386A7 | `eqh-dq` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/eqh-dq?region=us-east-1) |
-| `ECS::TaskDefinition` | TaskdailysyncBD897841 | `arn:aws:ecs:us-east-1:76170510…definition/eqh-dq-daily_sync:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-daily_sync?region=us-east-1) |
-| `ECS::TaskDefinition` | TaskenrichD86C02A0 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-enrich:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-enrich?region=us-east-1) |
-| `ECS::TaskDefinition` | TaskevalA93B9A31 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-eval:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-eval?region=us-east-1) |
-| `ECS::TaskDefinition` | TaskllmsmokeCAB2C006 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-llm_smoke:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-llm_smoke?region=us-east-1) |
-| `ECS::TaskDefinition` | Taskprofiler2C026845 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-profiler:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-profiler?region=us-east-1) |
+| `ECS::TaskDefinition` | TaskdailysyncBD897841 | `arn:aws:ecs:us-east-1:76170510…definition/eqh-dq-daily_sync:9` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-daily_sync?region=us-east-1) |
+| `ECS::TaskDefinition` | TaskenrichD86C02A0 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-enrich:9` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-enrich?region=us-east-1) |
+| `ECS::TaskDefinition` | TaskevalA93B9A31 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-eval:9` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-eval?region=us-east-1) |
+| `ECS::TaskDefinition` | TaskllmsmokeCAB2C006 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-llm_smoke:9` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-llm_smoke?region=us-east-1) |
+| `ECS::TaskDefinition` | Taskprofiler2C026845 | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-profiler:9` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-profiler?region=us-east-1) |
 | `IAM::Role` | DailyRole83FCF59B | `EqhDqPipeline-DailyRole83FCF59B-KRhBMPYCFm4r` | [open](https://console.aws.amazon.com/iam/home#/roles/details/EqhDqPipeline-DailyRole83FCF59B-KRhBMPYCFm4r) |
 | `IAM::Role` | SchedulerRole59E73443 | `EqhDqPipeline-SchedulerRole59E73443-uHOf3KHB78T0` | [open](https://console.aws.amazon.com/iam/home#/roles/details/EqhDqPipeline-SchedulerRole59E73443-uHOf3KHB78T0) |
 | `IAM::Role` | TaskdailysyncExecutionRole84CD4462 | `EqhDqPipeline-TaskdailysyncExecutionRole84CD4462-nheSufC45D9J` | [open](https://console.aws.amazon.com/iam/home#/roles/details/EqhDqPipeline-TaskdailysyncExecutionRole84CD4462-nheSufC45D9J) |
@@ -172,7 +172,7 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 
 **Outputs:** `ClusterName` = `eqh-dq`; `StateMachineArn` = `arn:aws:states:us-east-1:761705103792:stateMachine:eqh-dq-daily`; `TaskDefDailysync` = `eqh-dq-daily_sync`; `TaskDefEnrich` = `eqh-dq-enrich`; `TaskDefEval` = `eqh-dq-eval`; `TaskDefLlmsmoke` = `eqh-dq-llm_smoke`; `TaskDefProfiler` = `eqh-dq-profiler`; `TaskSecurityGroup` = `sg-07ef5a61892e55a75`; `TaskSubnets` = `subnet-02bbaccababe04b7f,subnet-0b7994f28b8848edf,subnet-0425f5f16fa052ab5`
 
-## EqhDqAssistant (53 CloudFormation resources)
+## EqhDqAssistant (45 CloudFormation resources)
 
 [CloudFormation stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?stackId=EqhDqAssistant)
 
@@ -195,7 +195,7 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 | `EC2::SecurityGroup` | AlbSg1155C1BE | `sg-08290f5b84f05c17f` | [open](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroup:groupId=sg-08290f5b84f05c17f) |
 | `EC2::SecurityGroup` | SvcSgFDC59615 | `sg-0aab214fed3cb6e54` | [open](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroup:groupId=sg-0aab214fed3cb6e54) |
 | `ECS::Service` | ServiceD69D759B | `arn:aws:ecs:us-east-1:761705103792:service/eqh-dq/eqh-dq-assistant` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/eqh-dq/services/eqh-dq-assistant?region=us-east-1) |
-| `ECS::TaskDefinition` | Task79114B6B | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-assistant:3` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-assistant?region=us-east-1) |
+| `ECS::TaskDefinition` | Task79114B6B | `arn:aws:ecs:us-east-1:761705103792:task-definition/eqh-dq-assistant:8` | [open](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/eqh-dq-assistant?region=us-east-1) |
 | `ElasticLoadBalancingV2::Listener` | AlbHttp7966E42E | `arn:aws:elasticloadbalancing:u…f44cce7086310/7f169bf9ce835dc4` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
 | `ElasticLoadBalancingV2::LoadBalancer` | Alb16C2F182 | `arn:aws:elasticloadbalancing:u…-87dhhki1yvtq/9f6f44cce7086310` | [open](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#LoadBalancers:) |
 | `ElasticLoadBalancingV2::TargetGroup` | AlbHttpAppGroupAC6A8101 | `arn:aws:elasticloadbalancing:u…-4GYFT5KNPKRD/c782df86a229eb37` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
@@ -211,12 +211,17 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 | `SecretsManager::Secret` | SessionSecretC41FBD23 | `arn:aws:secretsmanager:us-east…t:eqh-dq/session-secret-ZORSLP` | [open](https://us-east-1.console.aws.amazon.com/secretsmanager/secret?name=arn%3Aaws%3Asecretsmanager%3Aus-east-1%3A761705103792%3Asecret%3Aeqh-dq%2Fsession-secret-ZORSLP&region=us-east-1) |
 | `WAFv2::WebACL` | Waf | `eqh-dq-assistant|cf8c19d2-492f-4a81-83d6-fd1695efef5e|CLOUDFRONT` | [open](https://console.aws.amazon.com/wafv2/homev2/web-acls?region=global) |
 | `Custom::AWS` | CfPrefixListDC6ACBA1 | `cf-origin-prefix` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
-| `Custom::AWS` | SetPwddemoactuaryF06EEE1C | `pwd-demo-actuary` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
-| `Custom::AWS` | SetPwddemoanalyst172D6395 | `pwd-demo-analyst` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
-| `Custom::AWS` | SetPwddemobhanalystD5782166 | `pwd-demo-bh-analyst` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
-| `Custom::AWS` | SetPwddemosteward9E6F3701 | `pwd-demo-steward` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
 
 **Outputs:** `AlbArn` = `arn:aws:elasticloadbalancing:us-east-1:761705103792:loadbalancer/app/EqhDqA-Alb16-87dhhki1yvtq/9f6f44cce7086310`; `OutGuardrailId` = `jkpxf4avlmx4`; `OutGuardrailVersion` = `1`; `Url` = `https://d16or4k2hjq489.cloudfront.net`; `UserPoolId` = `us-east-1_Lh0KbrQZJ`
+
+## EqhDqObservability (3 CloudFormation resources)
+
+[CloudFormation stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?stackId=EqhDqObservability)
+
+| Type | Logical ID | Physical ID | Console |
+|---|---|---|---|
+| `CloudWatch::Dashboard` | DashCCD7F836 | `eqh-dq-assistant` | [open](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards/dashboard/eqh-dq-assistant) |
+| `Logs::MetricFilter` | LatencyFilter544CD537 | `LatencyFilter544CD537-qAhvuSwO9W4f` | [open](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1) |
 
 ## Created outside CloudFormation (data / catalog objects)
 

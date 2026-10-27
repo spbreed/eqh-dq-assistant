@@ -152,6 +152,7 @@ def main() -> None:
                                  f"values, rule failures, schema drift). The other 4 (undocumented, outdated docs, hidden "
                                  f"dependency, unused asset) are answered through governance and lineage tools."),
         "{{SHOT_CHAT}}": data_uri(shots / "analyst-chat.png"), "{{SHOT_ASSET}}": data_uri(shots / "analyst-asset.png"),
+        "{{SHOT_REVIEW}}": data_uri(shots / "steward-review.png"),
         "{{PG_NEXT}}": str(pg),
     }
     out = tpl.replace("{{SAMPLE_SLIDES}}", "\n".join(slides))

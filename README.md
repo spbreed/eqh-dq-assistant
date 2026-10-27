@@ -34,7 +34,8 @@ make pause | make resume | make destroy
 ```
 
 ## Status (2026-10-27)
-Deployed to account `761705103792` (us-east-1). All 14 planted defects are detected or answerable; Phase 2–5
+Deployed to account `761705103792` (us-east-1). All 14 planted defects are detected or answerable; the eval meets every
+target (91.9 % correct, 96.3 % citation precision, 100 % refusal/entitlement, p95 9.0 s); Phase 1–8
 verification passes; security self-check passes for every pilot control. The chat, enrichment and judge models run on
 `openai.gpt-oss-120b` via the bedrock-mantle Responses API. **GPT‑5.6 Terra/Luna/Sol are pending AWS account
 enablement**: the agreements are accepted, but the account is gated. See [docs/DECISIONS.md](docs/DECISIONS.md) D‑01.

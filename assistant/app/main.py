@@ -184,7 +184,7 @@ def api_trend(key: str, metric: str, column: str = "", segment: str = "", u: dic
 def api_review_queue(u: dict = Depends(user)):
     if "steward" not in u["groups"]:
         raise HTTPException(403, "steward group required")
-    return {"queue": review.queue()}
+    return {"queue": review.queue(u["groups"])}
 
 
 @app.post("/api/review")
@@ -195,7 +195,7 @@ async def api_review_action(request: Request, u: dict = Depends(user)):
     action = body.get("action")
     if action not in ("approve", "edit_approve", "reject"):
         raise HTTPException(400, "bad action")
-    return review.act(body["asset_key"], action, u["username"], body.get("text"))
+    return review.act(body["asset_key"], action, u["username"], body.get("text"), u["groups"])
 
 
 @app.get("/api/me")

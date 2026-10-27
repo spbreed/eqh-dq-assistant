@@ -26,3 +26,28 @@ def test_impact_ranking_order():
     assert T._impact_class("extract://payer_supplemental_quality_file") == "outbound_payer_submission"
     assert T._impact_class("redshift://eqh/careempower/open_care_gaps") == "careempower_feed"
     assert T._impact_class("redshift://eqh/vbc_mart/member_month") == "mart"
+
+
+def test_review_queue_respects_entitlements(monkeypatch):
+    from assistant.app import review
+
+    class DB:
+        def query(self, sql, params=None):
+            if "from asset_entitlement" in sql:
+                return [{"asset_key": "glue://eqh_raw/raw_careempower_ops", "column_name": "", "group_name": "restricted_bh"}]
+            if "from sync_run" in sql:
+                return []
+            if "ai_description_status = 'draft'" in sql:
+                return [{"asset_key": k, "asset_type": "table", "business_domain": None, "source_comment": None,
+                         "ai_description": "x", "ai_meta": {}, "updated_at": None}
+                        for k in ("glue://eqh_raw/raw_careempower_ops", "redshift://eqh/core/member")]
+            return []
+
+        def one(self, sql, params=None):
+            return None
+
+    monkeypatch.setattr(review, "MetaDB", lambda role: DB())
+    keys = [r["asset_key"] for r in review.queue(["analyst", "steward"])]
+    assert keys == ["redshift://eqh/core/member"]
+    keys = [r["asset_key"] for r in review.queue(["steward", "restricted_bh"])]
+    assert "glue://eqh_raw/raw_careempower_ops" in keys
