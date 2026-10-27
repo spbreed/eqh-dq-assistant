@@ -1,7 +1,7 @@
 .env
 .env.*
 .claude/settings.local.json
-cdk.out/
+cdk.out*/
 **/__pycache__/
 *.pem
 credentials

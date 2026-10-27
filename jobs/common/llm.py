@@ -90,8 +90,15 @@ def respond(role: str, input, *, instructions: str | None = None, tools: list | 
     if tools:
         kw["tools"] = tools
     if json_schema:
-        kw["text"] = {"format": {"type": "json_schema", "name": json_schema.get("title", "output"),
-                                 "schema": json_schema, "strict": True}}
+        if native_structured_output(kw["model"]):
+            kw["text"] = {"format": {"type": "json_schema", "name": json_schema.get("title", "output"),
+                                     "schema": json_schema, "strict": True}}
+        else:  # gpt-oss on mantle hangs on text.format=json_schema (verified); prompt for JSON instead
+            ask = ("\n\nOUTPUT FORMAT: respond with ONLY one JSON object - no markdown, no prose, no code fences. "
+                   "It must validate against this JSON Schema:\n" + json.dumps(json_schema)
+                   + "\nStart your reply with '{' and end it with '}'.")
+            kw["instructions"] = (instructions or "") + ask
+            kw["input"] = (input + ask) if isinstance(input, str) else list(input) + [{"role": "user", "content": ask}]
     if reasoning_effort:
         kw["reasoning"] = {"effort": reasoning_effort}
     for attempt in range(6):
@@ -104,15 +111,25 @@ def respond(role: str, input, *, instructions: str | None = None, tools: list | 
             raise
 
 
+def native_structured_output(model_id: str) -> bool:
+    return not model_id.startswith("openai.gpt-oss")
+
+
 def text_of(resp) -> str:
     return getattr(resp, "output_text", None) or ""
 
 
-def json_of(resp) -> dict:
+def json_of(resp, schema: dict | None = None) -> dict:
     t = text_of(resp).strip()
     if t.startswith("```"):
         t = t.strip("`").split("\n", 1)[1].rsplit("```", 1)[0]
-    return json.loads(t)
+    if not t.startswith("{"):
+        t = t[t.find("{"): t.rfind("}") + 1]
+    out = json.loads(t)
+    missing = [k for k in (schema or {}).get("required", []) if k not in out]
+    if missing:
+        raise ValueError(f"model JSON missing keys: {missing}")
+    return out
 
 
 def smoke() -> dict:

@@ -495,3 +495,59 @@ Targets: ≥ 85% correct, ≥ 90% citation precision, 100% refusal and entitleme
 - Healthcare Innovation, "An Equality Health Exec on the Firm's Medicaid-First Model": https://www.hcinnovationgroup.com/population-health-management/article/55132543/an-equality-health-exec-on-the-firms-medicaid-first-model
 - In Business Phoenix, 2024 review: https://inbusinessphx.com/?p=184830
 - Fierce Healthcare, Health at Home launch: https://www.fiercehealthcare.com/providers/equality-health-rolls-out-home-care-address-medical-social-needs-underserved-patients
+
+---
+
+# PART C — As-built notes (pilot, 2026-10-27)
+
+This section records how the pilot was actually built and where it deviates from Parts A–B. Details and evidence are
+in `docs/DECISIONS.md`; every resource is listed with console links in `Resources.md`.
+
+## C1. Environment
+- Account `761705103792` (shared; it hosts other projects), region `us-east-1`. Built from a Claude Code cloud session
+  whose AWS calls were signed by the environment proxy (long-lived IAM-user key: rotate after the pilot, see A4-alt).
+- CDK v2 (Python), 8 stacks: `EqhDqSecurity`, `EqhDqNetwork`, `EqhDqImage` (added), `EqhDqDataPlatform`,
+  `EqhDqMetadataStore`, `EqhDqPipeline`, `EqhDqAssistant`, `EqhDqObservability`.
+- **Budget & limits (A7 / Phase 0):** `eqh-dq-assistant-monthly` $300; email alerts at 50/80/100 % actual and 100 %
+  forecast to **RC@emergertech.com** and **karthik.ramamurthy@emergertech.com**; at 100 % an automatic budget action
+  attaches `eqh-dq-budget-deny` to the pilot roles. Redshift Serverless usage limit 300 RPU‑h/month (deactivate); Aurora
+  ≤ 4 ACU. Pipeline-failure alerts go by SNS to the same addresses.
+
+## C2. Deviations from Part B
+| SPEC | As built | Why |
+|---|---|---|
+| B1 / B8: GPT‑5.6 Terra (chat), Luna (enrich), Sol (judge) | `openai.gpt-oss-120b` for all three, via bedrock-mantle Responses API; GPT‑5.6 is a config switch | Marketplace agreements accepted, but AWS returns "not available for this account" for all GPT‑5.x/6 models (account-level gating). |
+| B8: mantle `/v1` | gpt-oss on `/v1/responses`, GPT‑5.x/6 on `/openai/v1/responses` | Verified path split per model family. |
+| B8: structured outputs | Native `json_schema` for GPT‑5.x; prompted JSON + validation for gpt-oss | `json_schema` on gpt-oss/mantle hangs (reproduced). |
+| B3: Aurora via psycopg | **RDS Data API** and **Redshift Data API** everywhere | Same code path for laptop, cloud session and Fargate; no DB network exposure. |
+| B3: Aurora 16.x | 16.13 | 16.6 no longer offered. |
+| B3: ALB + WAF + Cognito | CloudFront (HTTPS) → WAF → ALB (CloudFront-only) → Fargate; Cognito hosted UI | No custom domain/ACM certificate in the pilot. |
+| B3: VPC endpoints | 9 interface endpoints in 1 AZ; Redshift needs 3 AZs | Cost; Redshift Serverless subnet requirement. |
+| Images | Built in CodeBuild from an S3 source asset; ECR Public pull-through cache | Registry rate limits and proxy auth rewriting in the dev environment. |
+| B6 Phase 4b: Glue DQ every day | Glue DQ on the last simulated day + in the live pipeline; profiler SQL equivalents for every backfill day | Glue DQ has no as-of mode; DPU cost. |
+| B6 Phase 4c: batch inference > 100 assets | Bounded concurrent Responses calls | Batch support for OpenAI models on mantle unverified for the account. |
+| B3: scheduler 06:00 Phoenix | Deployed **disabled** after the backfill (`SCHEDULE=ENABLED make deploy STACK=EqhDqPipeline`) | No live feeds after day 21: daily runs would flag every feed stale. |
+| Enrichment | LLM + deterministic doc-lint (identifiers in comments that aren't columns) | gpt-oss missed D10 on its own; the lint is metadata-only. |
+| Eval judge | Same model as chat (gpt-oss-120b) | Sol not enabled. |
+
+## C3. Data simulation findings (fixed)
+- Redshift `avg(case … then 1.0 else 0.0 end)` averages as `numeric(2,1)` → rates rounded to 0.1; the profiler uses
+  `::float`.
+- RI orphans are checked against the parent as currently known (claims often precede the 834 add).
+- The silver Parquet in-file date column is named `load_date`; Spark rejects a file column named like the partition key.
+- Volume anomalies need a Poisson floor on the standard deviation plus ≥ 30 % change, and skip weekly/monthly feeds.
+
+## C4. Access
+- Assistant: CloudFront URL in `Resources.md`; demo users `demo-analyst`, `demo-steward`, `demo-actuary`,
+  `demo-bh-analyst` (passwords in Secrets Manager `eqh-dq/cognito/<user>`; set by `scripts/set_demo_passwords.py`).
+- Pitch deck: `eqh-dq-assistant.html` (reveal.js, Emergere branding), built by `scripts/build_deck.py`.
+
+## C5. Definition of done — status
+- [x] Part A done for the pilot (budget, Bedrock access incl. agreements, CDK bootstrap); profile-only access via env.
+- [x] `make bootstrap deploy-all seed simulate eval` path implemented and executed.
+- [x] All 14 planted defects detected (10 issue types, on their injection day) or answered (D09–D12); see the eval report.
+- [x] PHI-guard test (`tests/test_phi_guard.py`, `--aws` for store/logs).
+- [x] Security self-check passes for all pilot controls (it flags a non-pilot IAM user key older than 30 days); budget active.
+- [x] `make destroy` implemented (typed confirmation, buckets, snapshots, rulesets, `cdk destroy --all`, leftover check).
+- [x] `docs/` contains DECISIONS, RUNBOOK, DEMO_SCRIPT, COSTS.
+- [ ] Eval targets on GPT‑5.6 — pending AWS enablement; gpt-oss baseline results in `eval/report.html`.

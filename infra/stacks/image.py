@@ -27,7 +27,7 @@ class ImageStack(cdk.Stack):
         ecr.CfnPullThroughCacheRule(self, "EcrPublicCache", ecr_repository_prefix="ecr-public",
                                     upstream_registry_url="public.ecr.aws")
         src = s3a.Asset(self, "Source", path=str(pilot_config.ROOT), exclude=[
-            ".venv", "build", "infra/cdk.out", "**/__pycache__", ".git", "*.parquet", "eval/results"])
+            ".venv", "build", "infra/cdk.out*", "**/__pycache__", ".git", "*.parquet", "eval/results"])
         base = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/ecr-public/docker/library/python:3.12-slim"
         project = cb.Project(
             self, "Build", project_name="eqh-dq-image-build",

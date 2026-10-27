@@ -48,7 +48,7 @@ def _guardrail(text: str, source: str) -> tuple[bool, str]:
 def _summary(name: str, result: dict) -> str:
     if "error" in result:
         return result["error"]
-    for k in ("results", "issues", "changes", "unused", "terms", "impact_ranked", "series"):
+    for k in ("results", "issues", "changes", "unused_marts_and_views", "terms", "impact_ranked", "series"):
         if k in result:
             return f"{len(result[k])} {k}"
     return "ok"

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 from jobs.common import llm
@@ -43,8 +44,23 @@ You receive ONLY metadata: object name, type, existing comments, column names/ty
 neighbours and glossary terms. Never invent data values. Write a concise description for business analysts,
 a short description for every column (expand cryptic abbreviations using lineage and glossary evidence, and say
 "likely" when inferring), 2-6 tags, the business domain, and doc_issues: compare the existing comments with the
-actual column list and flag any comment that references columns that do not exist, contradicts a column's type,
+actual column list (doc_lint holds deterministic findings: always include them) and flag any comment that references columns that do not exist, contradicts a column's type,
 or is too terse to be useful. confidence is 0-1. Return JSON only."""
+
+
+# column-like identifiers only (enumerated values such as well_child are not flagged)
+IDENT = re.compile(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)*_(?:id|date|code|flag|npi|amt|amount|month|key|ts)\b")
+
+
+def doc_lint(comment: str | None, columns: list[str], other_comments: list[str | None]) -> list[str]:
+    """Deterministic documentation checks (metadata only): identifiers mentioned in comments that are not columns."""
+    names = {c.lower() for c in columns}
+    issues = []
+    for text, where in [(comment, "table comment")] + [(c, "a column comment") for c in other_comments]:
+        for ident in sorted(set(IDENT.findall((text or "").lower()))):
+            if ident not in names and not ident.startswith(("payer_", "raw_", "vbc_", "core_")):
+                issues.append(f"{where} references '{ident}', which is not a column of this asset (outdated documentation)")
+    return issues
 
 
 def build_context(db: MetaDB, asset_key: str) -> dict | None:
@@ -75,16 +91,25 @@ def build_context(db: MetaDB, asset_key: str) -> dict | None:
         "downstream": [f"{d['k']} ({d['edge_type']})" for d in down],
         "column_lineage": col_map,
         "glossary": glossary,
+        "doc_lint": doc_lint(a["source_comment"], [c["column_name"] for c in cols],
+                             [c["source_comment"] for c in cols]),
     }
 
 
-def draft(ctx: dict) -> dict:
-    r = llm.respond("enrich", json.dumps(ctx, default=str), instructions=INSTRUCTIONS, json_schema=SCHEMA,
-                    max_output_tokens=4000, reasoning_effort="low")
-    return llm.json_of(r)
+def draft(ctx: dict, attempts: int = 3) -> dict:
+    err: Exception | None = None
+    for _ in range(attempts):
+        try:
+            r = llm.respond("enrich", json.dumps(ctx, default=str), instructions=INSTRUCTIONS, json_schema=SCHEMA,
+                            max_output_tokens=4000, reasoning_effort="low")
+            return llm.json_of(r, SCHEMA)
+        except (ValueError, json.JSONDecodeError) as e:  # malformed JSON: ask again
+            err = e
+    raise RuntimeError(f"no valid draft after {attempts} attempts: {err}")
 
 
-def save(db: MetaDB, asset_key: str, doc_hash: str, out: dict) -> None:
+def save(db: MetaDB, asset_key: str, doc_hash: str, out: dict, lint: list[str] | None = None) -> None:
+    out["doc_issues"] = list(dict.fromkeys(list(lint or []) + list(out.get("doc_issues") or [])))
     meta = {"tags": out["tags"], "doc_issues": out["doc_issues"], "confidence": out["confidence"],
             "ai_business_domain": out["business_domain"], "model": llm.model("enrich")}
     with db.transaction():
@@ -120,7 +145,7 @@ def run(limit: int | None = None, workers: int = 6) -> dict:
             ctx = build_context(db, t["asset_key"])
             if ctx is None:
                 return "skipped"
-            save(db, t["asset_key"], t["doc_hash"], draft(ctx))
+            save(db, t["asset_key"], t["doc_hash"], draft(ctx), ctx["doc_lint"])
             return "drafted"
         except Exception as e:  # noqa: BLE001
             log.warning("enrich %s failed: %s", t["asset_key"], str(e)[:200])

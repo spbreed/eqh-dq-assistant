@@ -72,7 +72,7 @@ def build_queries(as_of: date, full_load: bool) -> list[tuple[str, str, str, str
         if not full_load:
             q.append((k, "", "daily_rows", _seg_union(t, segs, "count(*)::float AS value", f"ingest_date = {d}")))
         for c in nulls:
-            sel = f"avg(CASE WHEN {c} IS NULL THEN 1.0 ELSE 0.0 END) AS value"
+            sel = f"avg(CASE WHEN {c} IS NULL THEN 1.0::float ELSE 0.0::float END) AS value"
             where = f"ingest_date {'<=' if full_load else '='} {d}"
             q.append((k, c, "null_rate", _seg_union(t, segs, sel, where)))
         if keys:
@@ -80,9 +80,10 @@ def build_queries(as_of: date, full_load: bool) -> list[tuple[str, str, str, str
             sel = f"1.0 - count(DISTINCT {kexpr})::float / nullif(count(*), 0) AS value"
             q.append((k, keys[0], "dup_rate", _seg_union(t, segs, sel, f"ingest_date <= {d}")))
     for child, col, parent, pcol, segs in RI:
-        sel = "avg(CASE WHEN p.pk IS NULL THEN 1.0 ELSE 0.0 END) AS value"
-        src = (f"core.{child} c LEFT JOIN (SELECT DISTINCT {pcol} AS pk FROM core.{parent} "
-               f"WHERE ingest_date <= {d}) p ON p.pk = c.{col}")
+        sel = "avg(CASE WHEN p.pk IS NULL THEN 1.0::float ELSE 0.0::float END) AS value"
+        # RI is checked against the parent as currently known (records may legitimately arrive before the
+        # parent's add transaction; only keys that never resolve are orphans)
+        src = f"core.{child} c LEFT JOIN (SELECT DISTINCT {pcol} AS pk FROM core.{parent}) p ON p.pk = c.{col}"
         where = f"c.ingest_date {'<=' if full_load else '='} {d}"
         parts = [f"SELECT '' AS segment, {sel} FROM {src} WHERE {where}"]
         parts += [f"SELECT '{s}=' || c.{s} AS segment, {sel} FROM {src} WHERE {where} GROUP BY c.{s}"
@@ -97,7 +98,7 @@ def build_queries(as_of: date, full_load: bool) -> list[tuple[str, str, str, str
         WHERE a.ingest_date <= {d} AND b.ingest_date <= {d}"""))
     for (t, c), values in VALUE_SETS.items():
         vs = ",".join(f"'{v}'" for v in values)
-        sel = f"avg(CASE WHEN {c} IS NOT NULL AND {c} NOT IN ({vs}) THEN 1.0 ELSE 0.0 END) AS value"
+        sel = f"avg(CASE WHEN {c} IS NOT NULL AND {c} NOT IN ({vs}) THEN 1.0::float ELSE 0.0::float END) AS value"
         where = f"ingest_date {'<=' if full_load else '='} {d}"
         q.append((key("core", t), c, "invalid_value_rate", f"SELECT '' AS segment, {sel} FROM core.{t} WHERE {where}"))
     # core freshness per feed segment (ADT by state, claims by payer)
@@ -111,13 +112,14 @@ def build_queries(as_of: date, full_load: bool) -> list[tuple[str, str, str, str
                   f"FROM core.{t} WHERE ingest_date <= {d}"))
     # rules (SQL equivalents of the DQDL rulesets; Glue DQ itself runs in the live pipeline)
     q.append((key("careempower", "open_care_gaps"), "member_id", "rule_fail_rate:open_gaps_active_eligibility", f"""
-        SELECT '' AS segment, avg(CASE WHEN e.member_id IS NULL THEN 1.0 ELSE 0.0 END) AS value
+        SELECT '' AS segment, avg(CASE WHEN e.member_id IS NULL THEN 1.0::float ELSE 0.0::float END) AS value
         FROM careempower.open_care_gaps g
+        JOIN (SELECT care_gap_id FROM core.care_gap WHERE ingest_date <= {d}) asof ON asof.care_gap_id = g.care_gap_id
         LEFT JOIN (SELECT DISTINCT member_id FROM core.eligibility_span
                    WHERE start_date <= {d} AND coalesce(end_date, '2099-12-31') >= {d}) e ON e.member_id = g.member_id"""))
     q.append((key("core", "sdoh_screening"), "z_code", "rule_fail_rate:z_code_value_set",
               f"SELECT '' AS segment, avg(CASE WHEN z_code NOT IN "
-              f"({','.join(repr(v) for v in sorted(R.VALID_Z_CODES))}) THEN 1.0 ELSE 0.0 END) AS value "
+              f"({','.join(repr(v) for v in sorted(R.VALID_Z_CODES))}) THEN 1.0::float ELSE 0.0::float END) AS value "
               f"FROM core.sdoh_screening WHERE ingest_date {'<=' if full_load else '='} {d}"))
     return q
 

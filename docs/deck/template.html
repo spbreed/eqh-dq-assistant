@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Data Quality Assistant — Emergere</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1F1C61;--orange:#FD7541;--blue:#2761F8;--ink:#222;--muted:#5d6278;--soft:#F5F5F5;--line:#d9dbe6;--ok:#0f8a4b;--bad:#c2410c}
+.reveal{font-family:Lato,Calibri,system-ui,sans-serif;color:var(--ink);font-size:24px}
+.reveal .slides{text-align:left}
+.reveal .slides section{height:100%;padding:0;box-sizing:border-box}
+.reveal h1,.reveal h2,.reveal h3{font-family:Poppins,Lato,sans-serif;color:var(--navy);text-transform:none;letter-spacing:0;margin:0}
+.reveal h2{font-size:1.25em}.reveal h3{font-size:.9em;color:var(--navy);margin-bottom:.35em}
+.reveal p,.reveal li{line-height:1.38}
+.reveal ul{margin:0 0 0 1em}.reveal li{margin:.18em 0}
+.reveal strong{color:var(--navy)}
+.reveal code{font-size:.8em;background:#eef1fb;color:#1f3fae;padding:1px 5px;border-radius:4px}
+/* content slide chrome (mirrors the Emergere template) */
+.hdr{display:flex;align-items:center;gap:14px;padding:22px 40px 10px}
+.hdr .bar{width:8px;height:38px;background:var(--orange);border-radius:2px}
+.hdr .mark{margin-left:auto;height:44px}
+.rule{margin:0 40px 14px;border-top:2px dashed #c9cbd6}
+.body{padding:0 44px;height:calc(100% - 150px);overflow:hidden}
+.foot{position:absolute;left:0;right:0;bottom:0;height:46px;background:var(--navy);border-top:5px solid var(--orange);
+      color:#fff;font-size:.5em;display:flex;align-items:center;justify-content:center;letter-spacing:.02em}
+.pg{position:absolute;right:28px;bottom:58px;font-size:.5em;color:var(--muted);border:1px solid var(--line);
+    border-radius:4px;padding:1px 7px}
+/* section + title slides */
+section.dark{background:radial-gradient(1200px 600px at 80% 20%,#3b2fb7 0%,#1F1C61 55%,#14123f 100%)!important;color:#fff}
+section.dark h1,section.dark h2,section.dark h3{color:#fff}
+section.dark .kicker{color:var(--orange)}
+.kicker{font-family:Poppins;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.55em;color:var(--orange)}
+.dots{background-image:radial-gradient(#d8dbe6 1.6px,transparent 1.6px);background-size:22px 22px}
+/* components */
+.cols{display:grid;gap:18px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 2px 0 rgba(31,28,97,.04)}
+.card.soft{background:var(--soft);border-color:#ececf2}
+.card.navy{background:var(--navy);color:#fff;border:0}.card.navy h3{color:#fff}
+.card.or{border-top:5px solid var(--orange)}.card.bl{border-top:5px solid var(--blue)}
+.small{font-size:.72em}.tiny{font-size:.58em}.muted{color:var(--muted)}
+.big{font-family:Poppins;font-weight:800;font-size:2.1em;color:var(--navy);line-height:1}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.62em;font-weight:700;background:#eef1fb;color:#1f3fae;margin:2px}
+.pill.or{background:#fff1ea;color:#b4441a}.pill.ok{background:#e6f6ed;color:var(--ok)}.pill.bad{background:#fdecea;color:var(--bad)}
+table.t{border-collapse:collapse;width:100%;font-size:.6em}
+table.t th{background:var(--navy);color:#fff;text-align:left;padding:5px 8px;font-weight:700}
+table.t td{border-bottom:1px solid var(--line);padding:4px 8px;vertical-align:top}
+table.t tr:nth-child(even) td{background:#fafbfe}
+.flow{display:flex;align-items:stretch;gap:10px}
+.flow .node{flex:1;border-radius:10px;padding:10px 12px;font-size:.62em;background:#fff;border:1.5px solid var(--line)}
+.flow .node b{display:block;color:var(--navy);font-size:1.12em;margin-bottom:3px}
+.flow .arrow{align-self:center;color:var(--orange);font-weight:900;font-size:1.2em}
+.layer{border-radius:10px;padding:8px 12px;margin:6px 0;font-size:.62em;display:flex;gap:10px;align-items:center}
+.layer b{min-width:150px;color:var(--navy)}
+.qa{display:grid;grid-template-columns:1fr 1.6fr;gap:16px;height:100%}
+.q{background:var(--navy);color:#fff;border-radius:12px;padding:14px 16px}
+.q .who{font-size:.55em;letter-spacing:.08em;text-transform:uppercase;color:#ffb08f;margin-bottom:6px}
+.q .text{font-family:Poppins;font-weight:600;font-size:.9em}
+.q .meta{font-size:.55em;margin-top:12px;color:#c8c9e8}
+.a{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:.58em;overflow:hidden;max-height:520px;background:#fff;position:relative}
+.a:after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(transparent,#fff)}
+.a table{border-collapse:collapse;font-size:.95em;margin:6px 0}.a td,.a th{border:1px solid var(--line);padding:2px 6px}
+.a h1,.a h2,.a h3,.a h4{font-size:1.1em;margin:.4em 0 .2em}
+.a p{margin:.3em 0}.a ul,.a ol{margin:.2em 0 .2em 1.2em}
+.shot{border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(31,28,97,.12);max-height:520px}
+.kpi{text-align:center}.kpi .lbl{font-size:.58em;color:var(--muted);margin-top:4px}
+.lvl{display:flex;gap:12px;align-items:flex-start;margin:7px 0}
+.lvl .n{background:var(--orange);color:#fff;font-family:Poppins;font-weight:800;border-radius:8px;padding:4px 10px;font-size:.62em;white-space:nowrap}
+.lvl .d{font-size:.62em}
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 Title -->
+<section class="dots" data-state="title">
+  <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(transparent 0%,#fff 22%,#fff 78%,transparent 100%)">
+    <img src="{{LOGO}}" alt="Emergere Technologies" style="width:620px;margin-bottom:26px">
+    <div style="width:60px;height:4px;background:var(--orange);margin:6px 0 22px"></div>
+    <h1 style="color:var(--blue);font-size:1.9em">AI Data Quality Assistant</h1>
+    <p style="font-size:.95em;color:var(--navy);margin-top:12px">A governed, read-only agent for a Medicaid-first value-based-care data platform on AWS</p>
+    <p class="small muted">Pilot built on Amazon Bedrock (OpenAI models) · Prototype — synthetic data · {{DATE}}</p>
+  </div>
+  <div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 2 Agenda -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Agenda</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c3" style="margin-top:20px">
+    <div class="card or"><div class="kicker">Part 1</div><h3>Where we are</h3><ul class="small"><li>Customer context</li><li>Existing AWS data platform</li><li>Data model &amp; feeds</li><li>Challenges</li></ul></div>
+    <div class="card bl"><div class="kicker" style="color:var(--blue)">Part 2</div><h3>What we built</h3><ul class="small"><li>Target agent</li><li>AWS architecture</li><li>Daily metadata &amp; DQ pipeline</li><li>Security, governance &amp; cost</li><li>Evaluation strategy &amp; results</li></ul></div>
+    <div class="card or"><div class="kicker">Part 3</div><h3>Demo</h3><ul class="small"><li>How to access</li><li>20-minute storyline</li><li>Sample prompts &amp; responses</li><li>Live "day 22" defect</li><li>Next steps</li></ul></div>
+  </div></div>
+  <div class="pg">02</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- Section 1 -->
+<section class="dark"><div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 80px">
+  <div class="kicker">Part 1</div><h1 style="font-size:2.2em">The existing platform &amp; its challenges</h1>
+  <p style="max-width:900px;color:#d9daf2">Medicaid-first VBC enabler · 5 states · 20+ health-plan partners · multi-payer ingestion into a medallion lake and a Redshift business layer.</p></div></section>
+
+<!-- 4 Customer context -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Customer context: Medicaid-first value-based care</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body">
+    <div class="cols c4" style="margin-bottom:16px">
+      <div class="card kpi"><div class="big">5</div><div class="lbl">states — AZ, TX, LA, TN, VA</div></div>
+      <div class="card kpi"><div class="big">20+</div><div class="lbl">health-plan partners</div></div>
+      <div class="card kpi"><div class="big">~750k</div><div class="lbl">co-managed lives</div></div>
+      <div class="card kpi"><div class="big">4,000+</div><div class="lbl">primary-care providers</div></div>
+    </div>
+    <div class="cols c2">
+      <div class="card soft"><h3>Business model</h3><ul class="small">
+        <li>Risk-bearing VBC agreements with payers — accountable for <strong>total cost of care</strong> and <strong>quality</strong></li>
+        <li>Passes risk-bearing support, <strong>accelerated reimbursement</strong> and quality incentives to independent practices &amp; FQHCs</li>
+        <li><strong>CareEmpower®</strong> practice platform: risk-stratified panels, care gaps, HIE alerts</li>
+        <li>Care model: CHWs, chaplains, NPs, SDoH support, <strong>Health at Home</strong> (12-week in-home program)</li></ul></div>
+      <div class="card soft"><h3>Data that matters</h3><ul class="small">
+        <li>Per-payer, per-state feeds: <strong>834</strong> eligibility, <strong>837</strong> claims, pharmacy, PCP rosters, payer gap files</li>
+        <li>HIE <strong>ADT</strong> feeds, EHR/CCDA labs, CareEmpower operational data</li>
+        <li>Outputs: payer supplemental quality files, practice scorecards &amp; gap lists, incentive statements, CareEmpower panels, actuarial &amp; finance datashares</li>
+        <li>Outcomes: well-child, immunisation, BCS, diabetes (HbA1c), asthma, BP, <strong>ED utilisation ↓</strong></li></ul></div>
+    </div>
+    <p class="tiny muted" style="margin-top:10px">Public sources: equalityhealth.com/about; Healthcare Innovation; In Business Phoenix; Fierce Healthcare. The pilot uses fictitious payer codes and synthetic data only.</p>
+  </div>
+  <div class="pg">04</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 5 Existing AWS infra -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Existing AWS data platform (as modelled in the pilot)</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body">
+    <div class="flow" style="margin-bottom:12px">
+      <div class="node"><b>Sources</b>8 payers × 5 feeds (834, 837P/I, rosters, gap files, pharmacy) · 5 state HIE ADT feeds · EHR CCDA labs · CareEmpower ops</div>
+      <div class="arrow">➜</div>
+      <div class="node"><b>Raw — S3 + Glue <code>eqh_raw</code></b>47 tables, one per payer feed, partitioned by <code>ingest_date</code>; payer-specific column names, date formats, delimiters, cadence</div>
+      <div class="arrow">➜</div>
+      <div class="node"><b>Silver — S3 Parquet + Glue <code>eqh_silver</code></b>19 conformed entities; Glue Data Quality rulesets</div>
+      <div class="arrow">➜</div>
+      <div class="node"><b>Redshift Serverless <code>eqh</code></b><code>core</code> (COPY) · <code>spectrum_silver</code> · <code>careempower</code> · <code>vbc_mart</code> (MVs, late-binding views) · <code>outbound</code></div>
+      <div class="arrow">➜</div>
+      <div class="node"><b>Consumers</b>Payer SFTP submissions · practice portal · CareEmpower · BI (Tableau) · actuarial &amp; finance <b style="display:inline;font-size:1em">datashares</b></div>
+    </div>
+    <div class="cols c3">
+      <div class="card soft small"><h3>Governance today</h3>Glue Catalog + Redshift comments (≈60% of tables, ≈40% of columns, inconsistent) · Markdown glossary · an extract inventory spreadsheet.</div>
+      <div class="card soft small"><h3>Hidden coupling</h3>Late-binding views (no <code>pg_depend</code>), Spectrum externals and datashares make lineage invisible to standard tools.</div>
+      <div class="card soft small"><h3>Who knows what</h3>A few experienced engineers carry the lineage, the feed quirks and the "what breaks if" knowledge.</div>
+    </div>
+  </div>
+  <div class="pg">05</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 6 Data model -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Data model: 19 conformed entities across 9 domains</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c2">
+    <table class="t">
+      <tr><th>Domain</th><th>Entity</th><th>Pilot rows</th></tr>
+      <tr><td>Members</td><td><code>member</code></td><td>60,000</td></tr>
+      <tr><td>Eligibility</td><td><code>eligibility_span</code> (churn, redetermination)</td><td>~90,000</td></tr>
+      <tr><td>Attribution</td><td><code>pcp_assignment</code> (monthly rosters)</td><td>~175,000</td></tr>
+      <tr><td>Network</td><td><code>practice</code> · <code>provider</code> · <code>practice_contract</code></td><td>450 · 4,200 · 450</td></tr>
+      <tr><td>Claims</td><td><code>claim_header</code> · <code>claim_line</code></td><td>400k · 1.2M</td></tr>
+      <tr><td>Pharmacy · Clinical · HIE</td><td><code>rx_claim</code> · <code>lab_result</code> · <code>adt_event</code></td><td>200k · 120k · 150k</td></tr>
+      <tr><td>Quality</td><td><code>payer_gap_file</code> · <code>care_gap</code> (WCV, W30, CIS, BCS, GSD, CBP, AMR, PPC)</td><td>80k · 250k</td></tr>
+      <tr><td>Risk · Care model</td><td><code>member_risk_score</code> · <code>chw_encounter</code> · <code>sdoh_screening</code> · <code>health_at_home_episode</code></td><td>180k · 40k · 35k · 1.5k</td></tr>
+      <tr><td>Finance</td><td><code>practice_incentive_payment</code> · <code>shared_savings_settlement</code></td><td>5,400 · 450</td></tr>
+    </table>
+    <div>
+      <div class="card soft small" style="margin-bottom:12px"><h3>Business layer (Redshift)</h3>
+        <code>careempower</code>: panel_member_risk, open_care_gaps, hah_referral_queue<br>
+        <code>vbc_mart</code>: member_month (MV), pmpm_cost_by_practice (MV), ed_visits_per_1000_by_practice, quality_gap_closure_by_measure, practice_scorecard, practice_shared_savings_calc, hah_outcomes, v_member_lab_measures (late-binding), legacy_pmpm_2023<br>
+        <code>outbound</code>: payer_supplemental_quality_file, practice_gap_list, practice_incentive_statement, careempower_panel_feed, payer_hah_report (all late-binding)</div>
+      <div class="card soft small"><h3>Realistic shape</h3>Claims skew to high-risk members · ED seasonality · Texas skews maternal/paediatric · Health at Home from risk tiers 4–5 with lower post-episode ED use · SDoH data tagged <span class="pill or">restricted_bh</span></div>
+    </div>
+  </div></div>
+  <div class="pg">06</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 7 Challenges -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Challenges from the customer brief</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c4">
+    <div class="card or small"><h3>Discovery</h3>Hard to find the right dataset for a metric (e.g. "ED per 1,000 for AZ Medicaid").</div>
+    <div class="card or small"><h3>Documentation</h3>Inconsistent, terse or outdated comments; cryptic finance views.</div>
+    <div class="card or small"><h3>Impact</h3>Downstream consumers (payer files, CareEmpower, datashares) are hard to see.</div>
+    <div class="card or small"><h3>Manual DQ</h3>Missing, duplicate, stale, drifted and RI issues found late and by hand.</div>
+    <div class="card bl small"><h3>Key-person risk</h3>Dependence on a few experienced engineers; slow onboarding.</div>
+    <div class="card bl small"><h3>Multi-payer quirks</h3>Each payer's feed format, cadence and failure modes differ by state.</div>
+    <div class="card bl small"><h3>Silent breakage</h3>Late-binding views keep compiling while upstream types change.</div>
+    <div class="card bl small"><h3>Sensitive data</h3>SDoH / behavioral-health data must be entitlement-filtered.</div>
+  </div>
+  <div class="card navy" style="margin-top:16px;font-size:.7em"><strong style="color:#ffb08f">At risk:</strong> payer quality submissions, outbound practice deliveries, VBC analytics (PMPM, ED/1000, shared savings) and every future AI use case that depends on trusted data.</div>
+  </div>
+  <div class="pg">07</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 8 Planted defects -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>14 realistic failure modes planted as ground truth</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body">
+    <table class="t">
+      <tr><th>ID</th><th>What happens</th><th>Business impact</th><th>Detected as</th><th>Day</th></tr>
+      {{DEFECT_ROWS}}
+    </table>
+  </div>
+  <div class="pg">08</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- Section 2 -->
+<section class="dark"><div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 80px">
+  <div class="kicker">Part 2</div><h1 style="font-size:2.2em">Target agent, architecture &amp; evaluation</h1>
+  <p style="max-width:900px;color:#d9daf2">A thin, governed layer beside the lake, Redshift, Glue Catalog, BI and datashares — it never replaces them, and it never changes data.</p></div></section>
+
+<!-- 10 Target agent -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>The target: a governed, read-only data assistant</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c3">
+    <div class="card or"><h3>Answers</h3><ul class="small"><li>"Which dataset should I use for…"</li><li>Explains assets in plain language (steward &gt; source &gt; <em>AI draft – not yet approved</em>)</li><li>Business glossary (41 VBC/Medicaid terms)</li></ul></div>
+    <div class="card bl"><h3>Traces</h3><ul class="small"><li>Table- and <strong>column-level lineage</strong>, incl. late-binding views, Spectrum, datashares, extracts</li><li><strong>Impact of change</strong> ranked: payer submissions › CareEmpower › practice deliveries › finance › actuarial › marts</li></ul></div>
+    <div class="card or"><h3>Watches quality</h3><ul class="small"><li>Daily DQ issues by <strong>payer &amp; state segment</strong>: stale, volume, nulls, dups, orphans, overlaps, invalid values, rules, drift</li><li>Trends with inline charts</li></ul></div>
+    <div class="card bl"><h3>Drafts documentation</h3><ul class="small"><li>Enrichment drafts descriptions, column docs, tags and <strong>doc_issues</strong></li><li>Steward queue: approve / edit / reject — the only write path, audited</li></ul></div>
+    <div class="card or"><h3>Stays in its lane</h3><ul class="small"><li>Refuses any change to data, schemas, catalog or pipelines</li><li>No row-level data — metadata &amp; aggregates only</li><li>Entitlements: <code>restricted_bh</code> assets hidden</li></ul></div>
+    <div class="card navy"><h3>10 read-only tools</h3><p class="tiny" style="color:#dfe0f6">search_assets · get_asset · get_lineage · impact_of_change · get_dq_issues · get_dq_trend · get_schema_changes · list_undocumented_assets · list_unused_assets · search_glossary — parameterised SQL over the metadata store only.</p></div>
+  </div></div>
+  <div class="pg">10</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 11 Architecture -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>AWS target architecture (deployed with CDK v2, 8 stacks)</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body">
+    <div class="layer" style="background:#eef1fb"><b>Users → edge</b>CloudFront (HTTPS) → WAF (rate limit, AWS common rules, IP allow-list) → ALB reachable only from CloudFront · Cognito hosted UI (analyst · steward · actuarial · restricted_bh)</div>
+    <div class="layer" style="background:#fff1ea"><b>Assistant (ECS Fargate)</b>FastAPI chat (SSE streaming) · asset pages with Cytoscape lineage · steward review queue · Bedrock <strong>Guardrail</strong> on input &amp; output · read-only tools</div>
+    <div class="layer" style="background:#eef1fb"><b>Models (Amazon Bedrock)</b>OpenAI <strong>Responses API on bedrock-mantle</strong> (SigV4, task role) · chat / enrichment / judge: <code>gpt-oss-120b</code> today → <code>gpt-5.6-terra/luna/sol</code> when AWS enables them · Titan v2 embeddings · invocation logging</div>
+    <div class="layer" style="background:#fff1ea"><b>Metadata store</b>Aurora PostgreSQL 16 Serverless v2 + <strong>pgvector</strong> via the RDS Data API: asset graph, column lineage, DQ metrics &amp; issues, glossary, embeddings, entitlements, review audit</div>
+    <div class="layer" style="background:#eef1fb"><b>Daily pipeline</b>EventBridge Scheduler (06:00 America/Phoenix) → Step Functions: <strong>profile</strong> → <strong>daily_sync</strong> → <strong>enrich</strong> (Fargate) · SNS failure alerts</div>
+    <div class="layer" style="background:#fff1ea"><b>Read-only sources</b>Glue Catalog (raw/silver) · Redshift Serverless system views (<code>SYS_QUERY_HISTORY</code>, <code>pg_views</code>, datashares) · extract inventory · Glue DQ results · glossary</div>
+    <div class="layer" style="background:#eef1fb"><b>Foundation</b>VPC (3 AZ, isolated + egress subnets, 1 NAT, 9 interface endpoints) · KMS CMK · CloudTrail · Secrets Manager · CodeBuild + ECR image pipeline · CloudWatch dashboard</div>
+  </div>
+  <div class="pg">11</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 12 Pipeline -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Daily pipeline: profile → sync → enrich</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c3">
+    <div class="card or"><h3>1 · Profiler</h3><ul class="small"><li><strong>Aggregates only</strong>: row counts &amp; daily volume, null / dup / RI-orphan / overlap / invalid-value rates, freshness per feed</li><li>Segmented by <code>payer_code</code> and <code>state</code> — so "LA claims dropped" shows even when totals look normal</li><li>SQL equivalents of the Glue DQ rules for every day</li></ul></div>
+    <div class="card bl"><h3>2 · daily_sync</h3><ul class="small"><li>Harvests Glue, Redshift, datashares, extracts, Glue DQ, query history</li><li><strong>sqlglot</strong> parses view SQL → table &amp; column lineage (late-binding included)</li><li>Fingerprints structure → schema-drift log</li><li>Detects issues; ranks by downstream impact; embeds changes (pgvector)</li></ul></div>
+    <div class="card or"><h3>3 · Enrich</h3><ul class="small"><li>LLM drafts description, column docs, tags, domain, <strong>doc_issues</strong>, confidence (strict JSON)</li><li>Inputs: names, types, comments, lineage neighbours, glossary — no row values</li><li>Writes drafts only; never touches Glue/Redshift comments</li></ul></div>
+  </div>
+  <div class="cols c4" style="margin-top:16px">
+    <div class="card kpi"><div class="big">{{N_ASSETS}}</div><div class="lbl">assets catalogued</div></div>
+    <div class="card kpi"><div class="big">{{N_EDGES}}</div><div class="lbl">active lineage edges</div></div>
+    <div class="card kpi"><div class="big">{{N_METRICS}}</div><div class="lbl">aggregate DQ metrics (21 days)</div></div>
+    <div class="card kpi"><div class="big">{{N_DRAFTS}}</div><div class="lbl">AI documentation drafts</div></div>
+  </div></div>
+  <div class="pg">12</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 13 Trustworthy AI / security -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Trustworthy AI by design: security, governance &amp; cost</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c2">
+    <div>
+      <div class="lvl"><div class="n">Level 0 · Readiness</div><div class="d">Synthetic data only, use-case inventory, ground-truth defects, <strong>$300 budget</strong> with alerts to RC@ &amp; karthik.ramamurthy@ and an <strong>automatic deny</strong> at 100%, Redshift RPU limit, Aurora ACU cap</div></div>
+      <div class="lvl"><div class="n">Level 1 · Pilot</div><div class="d">IaC only (CDK), least-privilege roles (no <code>*:*</code>), KMS everywhere, private databases, CloudTrail, Bedrock invocation logs, 74-question eval</div></div>
+      <div class="lvl"><div class="n">Level 2 · Integration</div><div class="d">Cognito groups → entitlements (<code>restricted_bh</code>), Bedrock Guardrail (denied topic + PII + prompt-attack), steward approval as the only write path, audit table</div></div>
+      <div class="lvl"><div class="n">Level 3 · Optimisation</div><div class="d">Eval-driven tuning (scores, citations, refusals, latency), CloudWatch dashboard incl. guardrail hits &amp; tokens, customer IdP + PrivateLink in production</div></div>
+    </div>
+    <div>
+      <table class="t"><tr><th>Control</th><th>Status</th></tr>{{SECURITY_ROWS}}</table>
+      <p class="tiny muted" style="margin-top:6px">From <code>scripts/security_selfcheck.py</code> and <code>tests/test_phi_guard.py</code>.</p>
+    </div>
+  </div></div>
+  <div class="pg">13</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 14 Eval strategy -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Evaluation strategy</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c2">
+    <div class="card soft"><h3>74 golden questions, generated from ground truth</h3>
+      <table class="t"><tr><th>Category</th><th>#</th><th>Example</th></tr>
+        <tr><td>Discovery</td><td>15</td><td>Which dataset for PMPM by practice?</td></tr>
+        <tr><td>Explanation &amp; glossary</td><td>12</td><td>Explain practice_shared_savings_calc</td></tr>
+        <tr><td>Lineage &amp; impact</td><td>11</td><td>What breaks if lab_result.result_value changes?</td></tr>
+        <tr><td>Data quality</td><td>18</td><td>Why did LA claims drop yesterday?</td></tr>
+        <tr><td>Governance</td><td>6</td><td>Which assets are unused for 30 days?</td></tr>
+        <tr><td>Entitlement</td><td>5</td><td>SDoH columns as analyst vs restricted_bh</td></tr>
+        <tr><td>Refusal</td><td>7</td><td>Delete the duplicate claims for me</td></tr></table></div>
+    <div class="card soft"><h3>How each answer is scored</h3><ul class="small">
+      <li><strong>Tool-call correctness</strong> — expected tool(s) used; none for refusals</li>
+      <li><strong>Answer correctness</strong> — LLM judge with a per-question rubric of facts</li>
+      <li><strong>Citation precision</strong> — every cited asset key must appear in that run's tool results</li>
+      <li><strong>Refusal &amp; entitlement</strong> — write requests refused; restricted columns never returned to analysts</li>
+      <li><strong>Latency</strong> — p95 end-to-end in Fargate</li></ul>
+      <p class="small">Runs as an ECS task with the <em>same</em> code, DB role and models as the service: <code>make eval</code> → <code>eval/report.html</code>.</p></div>
+  </div></div>
+  <div class="pg">14</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 15 Eval results -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Evaluation results</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body">
+    <div class="cols c4" style="margin-bottom:14px">{{EVAL_KPIS}}</div>
+    <div class="cols c2">
+      <div class="card soft small"><h3>By category</h3><table class="t">{{EVAL_CATS}}</table></div>
+      <div class="card soft small"><h3>What moved the numbers</h3><ul>
+        <li>Tools resolve short names and normalise vocabularies (issue types, payer/state segments, domains)</li>
+        <li>Ranking prefers curated Redshift objects over raw/Spectrum</li>
+        <li>Explicit entitlement notices in tool results</li>
+        <li>Profiler fix: Redshift <code>avg(1.0/0.0)</code> was rounding rates to 0.1</li>
+        <li>Deterministic doc-lint feeds enrichment (catches D10)</li></ul>
+        <p class="tiny muted">Model: {{EVAL_MODEL}} via bedrock-mantle; judge: same model. GPT-5.6 Terra/Sol pending AWS enablement — re-run <code>make eval</code> to compare.</p></div>
+    </div>
+  </div>
+  <div class="pg">15</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 16 Solution summary / cost -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Solution at a glance</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c3">
+    <div class="card or"><h3>Detected (21 simulated days)</h3><p class="small">{{DETECTED_SUMMARY}}</p></div>
+    <div class="card bl"><h3>Operate</h3><ul class="small"><li><code>make deploy-all seed simulate eval</code></li><li><code>make simulate-day N=22 INJECT=D07</code> (live demo)</li><li><code>make pause</code> / <code>resume</code> / <code>destroy</code></li><li>Runbook, decisions, costs in <code>docs/</code></li></ul></div>
+    <div class="card or"><h3>Run cost</h3><p class="small">≈ <strong>$210–230 / month</strong> 24×7 (NAT, endpoints, Aurora min, ALB/WAF, Fargate) · ≈ $110 paused · LLM tokens ≈ $1–5 at pilot volume · hard-capped by the $300 budget action.</p></div>
+  </div>
+  <div class="card navy" style="margin-top:16px;font-size:.68em">Everything is code in <strong>github.com/spbreed/eqh-dq-assistant</strong>: CDK app, synthetic data generator with ground truth, jobs, assistant, eval harness, tests (incl. the PHI-guard test), runbook and resource inventory.</div>
+  </div>
+  <div class="pg">16</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- Section 3 -->
+<section class="dark"><div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 80px">
+  <div class="kicker">Part 3</div><h1 style="font-size:2.2em">Demo</h1>
+  <p style="max-width:900px;color:#d9daf2">Live assistant: <strong style="color:#fff">{{URL}}</strong></p></div></section>
+
+<!-- 18 Access -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>How to access the assistant</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c2">
+    <div>
+      <div class="card navy" style="margin-bottom:12px"><h3>URL</h3><p style="font-size:.8em;margin:4px 0"><a href="{{URL}}" style="color:#ffb08f">{{URL}}</a></p><p class="tiny" style="color:#cfd0ee">HTTPS via CloudFront · sign in with the Cognito hosted page · "Prototype – synthetic data" banner on every page</p></div>
+      <table class="t"><tr><th>Demo user</th><th>Groups</th><th>Shows</th></tr>
+        <tr><td><code>demo-analyst</code></td><td>analyst</td><td>chat, asset pages; SDoH hidden</td></tr>
+        <tr><td><code>demo-steward</code></td><td>analyst, steward</td><td>+ steward review queue</td></tr>
+        <tr><td><code>demo-actuary</code></td><td>actuarial</td><td>datashare / member-month questions</td></tr>
+        <tr><td><code>demo-bh-analyst</code></td><td>analyst, restricted_bh</td><td>SDoH visible (entitlement contrast)</td></tr></table>
+    </div>
+    <div class="card soft small"><h3>Getting a password</h3><ol>
+      <li>Sign in to the AWS console (account 761705103792, us-east-1).</li>
+      <li>Secrets Manager → secret <code>eqh-dq/cognito/&lt;user&gt;</code> → <em>Retrieve secret value</em>.</li>
+      <li>Or create your own user: Cognito → user pool <code>eqh-dq-assistant</code> → add user → add to groups.</li></ol>
+      <h3 style="margin-top:10px">Pages</h3><ul><li><strong>Chat</strong> — streamed answers, 🔧 tool trail, asset chips, inline DQ trend charts</li><li><strong>Asset page</strong> — description (labelled), columns, Cytoscape lineage graph, issues, drift</li><li><strong>Steward review</strong> — approve / edit-then-approve / reject AI drafts</li></ul></div>
+  </div></div>
+  <div class="pg">18</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 19 Storyline -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>20-minute demo storyline</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><table class="t">
+    <tr><th>Min</th><th>Beat</th><th>Prompt / action</th><th>Shows</th></tr>
+    <tr><td>0–3</td><td>Find data</td><td>"Where do I find ED visits per 1,000 by practice for Arizona Medicaid?"</td><td>semantic search, curated mart, filters</td></tr>
+    <tr><td>3–6</td><td>Understand</td><td>"Explain vbc_mart.practice_shared_savings_calc in plain language." → open asset page</td><td>AI draft label, cryptic columns decoded, lineage graph</td></tr>
+    <tr><td>6–9</td><td>Impact</td><td>"If the HbA1c result value changes type, which payer submissions and CareEmpower views are affected?"</td><td>column lineage through late-binding views → payer file</td></tr>
+    <tr><td>9–13</td><td>Triage</td><td>"What DQ issues opened in the last 7 days? Prioritise by impact on payer submissions." → "Why did Louisiana claims volume drop yesterday?"</td><td>impact-ranked issues, segmented trend chart</td></tr>
+    <tr><td>13–15</td><td>Live day</td><td><code>make simulate-day N=22 INJECT=D07</code>, then ask again</td><td>new data → profile → sync → issue in ~3 min</td></tr>
+    <tr><td>15–17</td><td>Govern</td><td>"Which gold-layer assets are undocumented or have outdated documentation?" → steward approves a draft</td><td>doc_issues (D10), review queue, audit</td></tr>
+    <tr><td>17–19</td><td>Guardrails</td><td>analyst: "Show me SDoH screening tables." · "Delete the duplicate claims for me."</td><td>entitlement filtering, polite refusal</td></tr>
+    <tr><td>19–20</td><td>Wrap</td><td>Eval report + CloudWatch dashboard</td><td>scores, latency, tokens, guardrail hits</td></tr></table></div>
+  <div class="pg">19</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- 20 screenshot -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>The assistant in action</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c2" style="align-items:start">
+    <img class="shot" src="{{SHOT_CHAT}}" alt="Chat: why did Louisiana claims volume drop">
+    <img class="shot" src="{{SHOT_ASSET}}" alt="Asset page with lineage graph for core.lab_result">
+  </div><p class="tiny muted" style="margin-top:6px">Left: segmented trend explains the LA drop (day 21). Right: <code>core.lab_result</code> asset page — late-binding path to the payer supplemental quality file (D05 → D11).</p></div>
+  <div class="pg">20</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+{{SAMPLE_SLIDES}}
+
+<!-- Next steps -->
+<section>
+  <div class="hdr"><div class="bar"></div><h2>Next steps</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="body"><div class="cols c3">
+    <div class="card or"><h3>Now</h3><ul class="small"><li>AWS to enable GPT-5.6 Terra/Luna/Sol (agreements accepted) → switch config, re-run eval</li><li>Customer review of the 14 failure modes and rubric</li><li>Confirm "OpenAI-only" scope for embeddings; BAA coverage question</li></ul></div>
+    <div class="card bl"><h3>Production path</h3><ul class="small"><li>Separate data &amp; AI accounts; cross-account read-only harvest roles</li><li>Customer IdP via IAM Identity Center; PrivateLink for bedrock-mantle; custom domain</li><li>Real Glue/Redshift metadata harvest — no data movement</li></ul></div>
+    <div class="card or"><h3>Extend</h3><ul class="small"><li>Slack/Teams entry point; issue → ticket routing to owners</li><li>Steward workflow at scale (bulk approvals, SLAs)</li><li>Agentic remediation proposals (human-approved, never automatic)</li></ul></div>
+  </div></div>
+  <div class="pg">{{PG_NEXT}}</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+<!-- Thank you -->
+<section class="dots">
+  <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(transparent 0%,#fff 25%,#fff 75%,transparent 100%)">
+    <img src="{{LOGO}}" alt="Emergere Technologies" style="width:520px;margin-bottom:16px">
+    <h1 style="color:var(--blue);font-size:2.2em;margin:10px 0">THANK YOU</h1>
+    <div class="cols c3" style="width:900px;margin-top:20px;text-align:left">
+      <div class="card small"><strong>US (Corporate Office)</strong><br>8105 Rasor Blvd, Suite 60, Plano, Texas 75024</div>
+      <div class="card small"><strong>India</strong><br>42, Sri Balasubramania Nagar, Peelamedu, Coimbatore 641 004</div>
+      <div class="card small"><strong>Dubai</strong><br>F009, Ras Al Khor Avenue, Dubai</div>
+    </div>
+  </div>
+  <div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
+</section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script>Reveal.initialize({hash:true,width:1280,height:720,margin:0,center:false,controls:true,progress:true,slideNumber:false,transition:'fade'});</script>
+</body>
+</html>

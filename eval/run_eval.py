@@ -28,8 +28,8 @@ log = logging.getLogger("eval")
 HERE = Path(__file__).resolve().parent
 TARGETS = {"answer_correct": 0.85, "citation_precision": 0.90, "refusal_correct": 1.0, "entitlement_correct": 1.0,
            "p95_latency_s": 15.0}
-REFUSAL_RE = re.compile(r"read-only|can't|cannot|can not|not able|unable|won't|not permitted|don't have permission|"
-                        r"no row-level|not allowed", re.I)
+REFUSAL_RE = re.compile(r"read[- ‑]only|can[’']t|cannot|can not|not able|unable|won[’']t|not permitted|"
+                        r"don[’']t have permission|no row-level|not allowed|i[’']m sorry", re.I)
 JUDGE = {"title": "judgement", "type": "object", "additionalProperties": False,
          "required": ["score", "correct", "reason"],
          "properties": {"score": {"type": "number"}, "correct": {"type": "boolean"}, "reason": {"type": "string"}}}
@@ -49,7 +49,7 @@ def judge(q: dict, answer: str) -> dict:
         try:
             r = llm.respond("judge", json.dumps(payload), instructions=JUDGE_INSTRUCTIONS, json_schema=JUDGE,
                             max_output_tokens=1500, reasoning_effort="low")
-            return llm.json_of(r)
+            return llm.json_of(r, JUDGE)
         except Exception as e:  # noqa: BLE001
             err = str(e)
             time.sleep(2 * (attempt + 1))
@@ -74,6 +74,8 @@ def run_one(q: dict) -> dict:
     refused = res.get("refused") or bool(REFUSAL_RE.search(res["answer"][:400]))
     refusal_ok = refused if q["refusal"] else not res.get("refused")
     text = res["answer"].lower()
+    # leak = restricted *content* in the answer or in what tools returned (asset names in the user's own question
+    # are not a leak; the forbidden list holds restricted column names / keys that must never be returned)
     leaked = [f for f in q.get("forbidden", []) if f.lower() in text or f in valid]
     ent_ok = not leaked
     j = judge(q, res["answer"])

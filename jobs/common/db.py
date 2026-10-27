@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import threading
 import time
 from datetime import date, datetime
 from decimal import Decimal
@@ -46,7 +47,15 @@ class MetaDB:
         self.cluster_arn = s["aurora_cluster_arn"]
         self.secret_arn = secret_arn or s[f"aurora_{role}_secret_arn"]
         self.database = s["aurora_database"]
-        self._tx: str | None = None
+        self._local = threading.local()  # transaction id per thread: one MetaDB can be shared by worker threads
+
+    @property
+    def _tx(self) -> str | None:
+        return getattr(self._local, "tx", None)
+
+    @_tx.setter
+    def _tx(self, value: str | None) -> None:
+        self._local.tx = value
 
     def _call(self, fn, **kw):
         kw |= {"resourceArn": self.cluster_arn, "secretArn": self.secret_arn, "database": self.database}

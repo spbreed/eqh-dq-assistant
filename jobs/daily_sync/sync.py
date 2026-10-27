@@ -309,7 +309,9 @@ class Harvester:
                         continue
                     for rule in res.get("RuleResults", []):
                         out.append({"asset_key": glue_key(tbl["DatabaseName"], tbl["TableName"]), "column_name": "",
-                                    "metric": "rule:" + re.sub(r"\W+", "_", rule["Name"]).strip("_").lower(),
+                                    # Glue names rules Rule_N; the DQDL text identifies the check
+                                    "metric": "rule:" + re.sub(r"\W+", "_", rule.get("Description") or rule["Name"])
+                                    .strip("_").lower()[:80],
                                     "segment": "glue_dq", "value": 1.0 if rule["Result"] == "PASS" else 0.0,
                                     "measured_at": self.as_of.isoformat(),
                                     "description": rule.get("Description", "")[:200]})
@@ -502,7 +504,7 @@ def sync_columns(db: MetaDB, assets: list[Asset]) -> None:
 
 
 # ---------------------------------------------------------------- 6. lineage
-def upsert_edges(db: MetaDB, run_id: str, edges: list[Edge], at: datetime) -> int:
+def upsert_edges(db: MetaDB, run_id: str, edges: list[Edge], at: datetime, partial: bool = False) -> int:
     uniq = {(e.src, e.dst, e.edge_type): e for e in edges}
     db.executemany("""
         insert into lineage_edge(src_asset_key, dst_key, edge_type, attrs, first_seen_at, last_seen_run, last_seen_at,
@@ -512,8 +514,9 @@ def upsert_edges(db: MetaDB, run_id: str, edges: list[Edge], at: datetime) -> in
             attrs=excluded.attrs, last_seen_run=excluded.last_seen_run, last_seen_at=excluded.last_seen_at,
             is_active=true""",
         [{"s": e.src, "d": e.dst, "t": e.edge_type, "a": e.attrs, "run": run_id, "at": at} for e in uniq.values()])
-    db.execute("""update lineage_edge set is_active=false where is_active and edge_type <> 'query_consumer'
-                  and last_seen_run <> :run::uuid""", {"run": run_id})
+    if not partial:  # a failed source must not expire the edges it would have reported (cf. frozen platforms)
+        db.execute("""update lineage_edge set is_active=false where is_active and edge_type <> 'query_consumer'
+                      and last_seen_run <> :run::uuid""", {"run": run_id})
     db.execute("""update lineage_edge set is_active=false where is_active and edge_type = 'query_consumer'
                   and last_seen_at < :at::timestamptz - (:d * interval '1 day')""", {"at": at, "d": EDGE_EXPIRY_DAYS})
     return len(uniq)
@@ -762,7 +765,7 @@ def run(as_of: date | None = None) -> dict:
         terms = h.glossary()
         g_rows = sync_glossary(db, terms, at)
         edges += glossary_edges(db, terms)
-        stats["edges"] = upsert_edges(db, run_id, edges, at)
+        stats["edges"] = upsert_edges(db, run_id, edges, at, partial=bool(failed))
         update_usage(db, usage)
         stats.update(record_metrics_and_issues(db, run_id, metrics, at))
         stats["entitlements"] = sync_entitlements(db)
@@ -783,6 +786,25 @@ def run(as_of: date | None = None) -> dict:
         raise
 
 
+def reload_profiles(db: MetaDB) -> None:
+    """Replace stored profiler metrics with the current S3 profile files (after a profiler fix + re-profile)."""
+    s3 = boto3.client("s3", region_name=settings.get()["region"])
+    bucket = settings.get()["bucket_dq"]
+    runs = db.query("select distinct on (as_of::date) run_id::text, as_of from sync_run where status='succeeded' "
+                    "and as_of is not null order by as_of::date, started_at desc")
+    for r in runs:
+        d = str(r["as_of"])[:10]
+        body = s3.get_object(Bucket=bucket, Key=f"profile/dt={d}/metrics.jsonl")["Body"].read().decode()
+        ms = [json.loads(x) for x in body.splitlines() if x.strip()]
+        with db.transaction():
+            db.execute("delete from dq_metric where measured_at::date = :d::date and segment <> 'glue_dq'", {"d": d})
+            db.executemany("""insert into dq_metric(run_id, asset_key, column_name, metric, segment, value, measured_at)
+                              values (:run::uuid,:k,:c,:m,:s,:v,:t::timestamptz) on conflict do nothing""",
+                           [{"run": r["run_id"], "k": m["asset_key"], "c": m.get("column_name", ""), "m": m["metric"],
+                             "s": m.get("segment", ""), "v": m["value"], "t": m["measured_at"]} for m in ms])
+        log.info("reloaded %d profiler metrics for %s", len(ms), d)
+
+
 def redetect() -> None:
     """Re-run metric-based issue detection over stored metrics, day by day (after tuning thresholds).
     Schema-drift issues come from structural diffs and are kept."""
@@ -797,7 +819,7 @@ def redetect() -> None:
             continue
         seen.add(at.date())
         ms = db.query("""select asset_key, column_name, metric, segment, value, measured_at::text as measured_at
-                         from dq_metric where measured_at::date = :d""", {"d": at.date()})
+                         from dq_metric where measured_at::date = :d::date""", {"d": at.date()})
         stats = record_metrics_and_issues(db, r["run_id"], ms, at)
         log.info("redetect %s: %s", at.date(), stats)
 
@@ -807,8 +829,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--as-of", default=None, help="simulated date (YYYY-MM-DD) for backfills")
     ap.add_argument("--redetect", action="store_true", help="replay issue detection over stored metrics")
+    ap.add_argument("--reload-profiles", action="store_true", help="with --redetect: reload profiler output first")
     a = ap.parse_args()
     if a.redetect:
+        if a.reload_profiles:
+            reload_profiles(MetaDB(role="harvest"))
         redetect()
         return
     run(date.fromisoformat(a.as_of) if a.as_of else None)

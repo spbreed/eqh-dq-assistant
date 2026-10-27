@@ -102,7 +102,9 @@ def write_silver(frames: dict[str, pd.DataFrame], day: int, root: Path = BUILD) 
             elif t == "string":
                 v = v.astype(object).where(v.notna(), None).map(lambda x: None if x is None else str(x))
             cols[c] = pa.array(v.tolist() if t != "timestamp" else v, type=ARROW[t], from_pandas=True)
-        cols["ingest_date"] = pa.array([ingest_date] * len(part), type=pa.date32())
+        # In-file copy of the partition date. Named load_date (not ingest_date) so Spark/Glue don't see a duplicate
+        # of the partition column; Redshift COPY maps Parquet columns by position into core.<entity>.ingest_date.
+        cols["load_date"] = pa.array([ingest_date] * len(part), type=pa.date32())
         path = root / "silver" / entity / f"ingest_date={ingest_date}" / "part-0000.parquet"
         path.parent.mkdir(parents=True, exist_ok=True)
         pq.write_table(pa.table(cols), path, compression="snappy")

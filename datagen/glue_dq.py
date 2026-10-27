@@ -46,12 +46,13 @@ def ensure_rulesets() -> None:
         name = f"eqh_silver_{table}"
         args = {"Name": name, "Ruleset": dqdl, "Description": f"Silver DQ rules for {table}"}
         try:
+            glue.get_data_quality_ruleset(Name=name)
+            glue.update_data_quality_ruleset(**args)
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "EntityNotFoundException":
+                raise
             glue.create_data_quality_ruleset(**args, TargetTable={"DatabaseName": "eqh_silver", "TableName": table},
                                              Tags={"project": "eqh-dq-assistant", "env": "pilot", "data": "synthetic"})
-        except ClientError as e:
-            if e.response["Error"]["Code"] != "AlreadyExistsException":
-                raise
-            glue.update_data_quality_ruleset(**args)
 
 
 def run_all(as_of: date, wait: bool = True) -> list[str]:

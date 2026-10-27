@@ -144,6 +144,10 @@ class AssistantStack(cdk.Stack):
                                       "COGNITO_USER_POOL_ID": pool.user_pool_id, "PUBLIC_URL": public_url},
                          secrets={"ORIGIN_VERIFY_SECRET": ecs.Secret.from_secrets_manager(origin_secret),
                                   "SESSION_SECRET": ecs.Secret.from_secrets_manager(session_secret)})
+        # CDK doesn't add KMS grants for an imported key: the execution role decrypts the two secrets explicitly
+        td.add_to_execution_role_policy(iam.PolicyStatement(
+            actions=["kms:Decrypt"], resources=[security.key.key_arn],
+            conditions={"StringEquals": {"kms:ViaService": f"secretsmanager.{self.region}.amazonaws.com"}}))
         svc_sg = ec2.SecurityGroup(self, "SvcSg", vpc=network.vpc, description="assistant tasks")
         svc_sg.add_ingress_rule(alb_sg, ec2.Port.tcp(8080), "from ALB")
         self.service = ecs.FargateService(self, "Service", service_name="eqh-dq-assistant", cluster=cluster,
@@ -157,7 +161,7 @@ class AssistantStack(cdk.Stack):
                              deregistration_delay=cdk.Duration.seconds(10))
         self.alb = alb
 
-        # Demo personas: passwords generated into Secrets Manager (never printed), set via AdminSetUserPassword.
+        # Demo personas: passwords generated into Secrets Manager (never printed).
         for name, groups in PERSONAS.items():
             sec = sm.Secret(self, f"Pwd-{name}", secret_name=f"eqh-dq/cognito/{name}", encryption_key=key,
                             generate_secret_string=sm.SecretStringGenerator(
@@ -169,17 +173,8 @@ class AssistantStack(cdk.Stack):
                 att = cognito.CfnUserPoolUserToGroupAttachment(self, f"A-{name}-{g}", user_pool_id=pool.user_pool_id,
                                                                username=name, group_name=g)
                 att.add_dependency(u)
-            setpw = cr.AwsCustomResource(
-                self, f"SetPwd-{name}",
-                on_create=cr.AwsSdkCall(service="CognitoIdentityServiceProvider", action="adminSetUserPassword",
-                                        parameters={"UserPoolId": pool.user_pool_id, "Username": name,
-                                                    "Password": sec.secret_value_from_json("password").unsafe_unwrap(),
-                                                    "Permanent": True},
-                                        physical_resource_id=cr.PhysicalResourceId.of(f"pwd-{name}")),
-                policy=cr.AwsCustomResourcePolicy.from_statements([iam.PolicyStatement(
-                    actions=["cognito-idp:AdminSetUserPassword"], resources=[pool.user_pool_arn])]),
-                install_latest_aws_sdk=False)
-            setpw.node.add_dependency(u)
+            # password is set from the secret by scripts/set_demo_passwords.py (CloudFormation does not resolve
+            # Secrets Manager dynamic references inside custom-resource properties)
 
         cdk.CfnOutput(self, "Url", value=public_url)
         cdk.CfnOutput(self, "UserPoolId", value=pool.user_pool_id)
