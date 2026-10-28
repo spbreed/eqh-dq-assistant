@@ -88,7 +88,7 @@ def main() -> None:
         rows.append(f"<tr><td><b>{d['id']}</b> {html.escape(d['description'])}</td><td>{status}</td></tr>")
     n_issue_types = sum(1 for d in truth if d["expected_detection"] in det_map)
 
-    sec = [("Budget $300 + alerts + automatic deny", True), ("No public S3; KMS encryption on all buckets", True),
+    sec = [("Budget alerts + automatic deny", True), ("No public S3; KMS encryption on all buckets", True),
            ("No wildcard IAM on pilot roles", True), ("Aurora & Redshift private, encrypted", True),
            ("CloudTrail + Bedrock invocation logging", True), ("Redshift RPU usage limit", True),
            ("PHI guard: no row values in store / prompts / logs", True),

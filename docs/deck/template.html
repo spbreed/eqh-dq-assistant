@@ -60,6 +60,34 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 .n b{display:block;font-size:12.5px}.n small{display:block;color:#5d6278;font-size:10.5px}
 .n.sm{width:110px}.n.sm img{width:36px;height:36px}
 .wire-label{font:600 10px Lato,sans-serif;fill:#5d6278}
+/* architecture slides: scaled diagram + workflow + components */
+.archg{display:grid;grid-template-columns:870px 1fr;gap:14px}
+.diaw{width:864px;overflow:visible}.diaw .dia{transform-origin:0 0;margin:0}
+.stp{position:absolute;z-index:4;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;font:800 14px Poppins,sans-serif;
+     display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff}
+.flow{list-style:none;margin:0;padding:0;counter-reset:f}
+.flow li{position:relative;padding:0 0 0 34px;margin:0 0 7px;font-size:.54em;line-height:1.3;counter-increment:f}
+.flow li:before{content:counter(f);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff;
+     font:800 13px/24px Poppins,sans-serif;text-align:center}
+.flow li b{color:var(--navy)}
+.flow .sub{font:700 .5em Poppins,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin:2px 0 6px;padding:0}
+.flow .sub:before{display:none}.flow li.sub{counter-increment:none}
+.comps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;margin-top:8px}
+.comps div{font-size:.54em;line-height:1.3;border-left:3px solid var(--blue);padding:2px 0 2px 8px;background:#f7f8fc}
+.comps b{color:var(--navy)}
+/* storyline beats */
+.beats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.beat{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px 7px 12px;box-shadow:0 3px 10px rgba(31,28,97,.06)}
+.beat .tag{display:flex;align-items:center;gap:7px;font:800 .5em Poppins,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--navy)}
+.beat .tag i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;letter-spacing:0}
+.beat .ask{margin:6px 0 5px 14px;position:relative;background:var(--navy);color:#fff;border-radius:12px 12px 12px 3px;padding:6px 10px;
+     font:600 .5em/1.32 Poppins,sans-serif}
+.beat .ask:before{content:"";position:absolute;left:-7px;bottom:0;border:7px solid transparent;border-right-color:var(--navy);border-bottom-color:var(--navy)}
+.beat .ask code{background:#35317f;color:#ffd2bf}
+.beat .shows{font-size:.46em;color:var(--muted);padding-left:14px}.beat .shows b{color:#b4441a}
+.beat.live{border:2px solid var(--orange);background:#fff8f4}.beat.live .ask{background:var(--orange)}
+.beat.live .ask:before{border-right-color:var(--orange);border-bottom-color:var(--orange)}
+.beat.guard .ask{background:#5d6278}.beat.guard .ask:before{border-right-color:#5d6278;border-bottom-color:#5d6278}
 /* sample Q&A */
 .qa2{display:grid;grid-template-columns:1fr 1fr;gap:16px;height:100%}
 .qa{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
@@ -113,7 +141,8 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 <section>
   <div class="hdr"><div class="bar"></div><h2>Today's AWS data platform</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
   <div class="body">
-    <div class="dia" data-edges="s1>raw,s2>raw,s3>raw,raw>glue,glue>silver,silver>rs,rs>c1,rs>c2,rs>c3,rs>share,share>c4,cat~raw,dq~silver">
+    <div class="archg"><div class="diaw" style="height:340px">
+    <div class="dia" style="transform:scale(.72)" data-edges="s1>raw,s2>raw,s3>raw,raw>glue,glue>silver,silver>rs,rs>c1,rs>c2,rs>c3,rs>share,share>c4,cat~raw,dq~silver">
       <svg class="wires"></svg>
       <div class="g ext" style="left:0;top:20px;width:170px;height:440px"><div class="gl">Data sources</div></div>
       <div class="n" id="s1" style="left:15px;top:60px"><img src="{{ICON:Officebuilding}}"><b>8 health plans</b><small>834 · 837 · rosters · gap files · Rx</small></div>
@@ -133,8 +162,25 @@ table.t tr:nth-child(even) td{background:#fafbfe}
       <div class="n" id="c2" style="left:1040px;top:150px"><img src="{{ICON:Users}}"><b>Practice portal</b><small>scorecards · gap lists</small></div>
       <div class="n" id="c3" style="left:1040px;top:256px"><img src="{{ICON:GenericApplication}}"><b>CareEmpower</b><small>panel feed</small></div>
       <div class="n" id="c4" style="left:1040px;top:362px"><img src="{{ICON:Client}}"><b>Actuarial · Finance · BI</b><small>datashares · Tableau</small></div>
+      <div class="stp" style="left:180px;top:110px">1</div><div class="stp" style="left:290px;top:250px">2</div>
+      <div class="stp" style="left:548px;top:96px">3</div><div class="stp" style="left:752px;top:96px">4</div>
+      <div class="stp" style="left:985px;top:60px">5</div>
+    </div></div>
+    <div><h3>Workflow</h3><ol class="flow">
+      <li><b>Land.</b> 8 health plans, state HIEs and the EHR/CareEmpower drop daily files into the S3 raw zone (47 feeds, each with its own quirks).</li>
+      <li><b>Catalogue.</b> The Glue Data Catalog registers raw and silver tables and their schemas.</li>
+      <li><b>Conform &amp; check.</b> Glue jobs turn raw files into silver Parquet; Glue Data Quality rulesets test them.</li>
+      <li><b>Model.</b> Redshift loads <code>core</code>, then builds marts and late-binding views.</li>
+      <li><b>Deliver.</b> Payer submissions, practice scorecards, the CareEmpower panel feed and datashares go out.</li></ol></div>
     </div>
-    <p class="tiny muted" style="margin-top:2px">The assistant sits beside this platform and reads its metadata. It does not replace or change any of it.</p>
+    <div class="comps">
+      <div><b>Amazon S3 (raw / silver)</b> · landing zone for payer files; conformed Parquet layer</div>
+      <div><b>AWS Glue + Data Catalog</b> · conformance jobs and the schema registry for raw and silver</div>
+      <div><b>Glue Data Quality</b> · DQDL rules for completeness, validity and freshness</div>
+      <div><b>Redshift Serverless</b> · <code>core</code> tables plus <code>vbc_mart</code>, <code>careempower</code>, <code>outbound</code> views</div>
+      <div><b>Datashares</b> · zero-copy sharing to the actuarial and finance teams</div>
+      <div><b>Consumers</b> · payer SFTP, practice portal, CareEmpower, BI. The assistant only reads this platform's metadata.</div>
+    </div>
   </div>
   <div class="pg">03</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
 </section>
@@ -200,7 +246,8 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 <section>
   <div class="hdr"><div class="bar"></div><h2>Target AWS architecture</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
   <div class="body">
-    <div class="dia" style="height:478px" data-edges="users>cf,cf>alb,alb>app,app>aur,app>br,jobs>aur,jobs>br,sch>sfn,sfn>jobs,jobs>plat,cog~cf,waf~cf">
+    <div class="archg"><div class="diaw" style="height:346px">
+    <div class="dia" style="height:478px;transform:scale(.72)" data-edges="users>cf,cf>alb,alb>app,app>aur,app>br,jobs>aur,jobs>br,sch>sfn,sfn>jobs,jobs>plat,cog~cf,waf~cf">
       <svg class="wires"></svg>
       <div class="n" id="users" style="left:0;top:180px;width:110px"><img src="{{ICON:Users}}"><b>Users</b><small>analysts · stewards · actuaries</small></div>
       <div class="g cloud" style="left:120px;top:0;width:1080px;height:478px"><div class="gl"><img src="{{ICON:AWSCloudlogo}}">AWS Cloud</div></div>
@@ -226,9 +273,30 @@ table.t tr:nth-child(even) td{background:#fafbfe}
         <span><img src="{{ICON:AWSSecretsManager}}" style="width:24px;vertical-align:middle"> Secrets Manager</span>
         <span><img src="{{ICON:AWSCloudTrail}}" style="width:24px;vertical-align:middle"> CloudTrail</span>
         <span><img src="{{ICON:AmazonCloudWatch}}" style="width:24px;vertical-align:middle"> CloudWatch</span>
-        <span><img src="{{ICON:AWSBudgets}}" style="width:24px;vertical-align:middle"> Budgets ($300 + auto-deny)</span>
+        <span><img src="{{ICON:AWSBudgets}}" style="width:24px;vertical-align:middle"> Budgets (alerts + auto-deny)</span>
         <span><img src="{{ICON:AWSCodeBuild}}" style="width:24px;vertical-align:middle"> CodeBuild → ECR</span>
       </div>
+      <div class="stp" style="left:850px;top:296px">1</div><div class="stp" style="left:600px;top:300px">2</div>
+      <div class="stp" style="left:870px;top:250px">3</div><div class="stp" style="left:10px;top:150px">4</div>
+      <div class="stp" style="left:600px;top:150px">5</div><div class="stp" style="left:760px;top:120px">6</div>
+    </div></div>
+    <div><h3>Workflow</h3><ol class="flow">
+      <li class="sub">Nightly metadata pipeline</li>
+      <li><b>Trigger.</b> EventBridge Scheduler starts the Step Functions chain at 06:00 (Phoenix).</li>
+      <li><b>Harvest.</b> Fargate jobs profile the data (aggregates only), harvest the catalogue, parse SQL lineage and detect DQ issues and drift.</li>
+      <li><b>Enrich &amp; store.</b> Bedrock drafts documentation and Titan embeds it. Everything is written to the metadata store.</li>
+      <li class="sub">Ask the assistant</li>
+      <li><b>Sign in.</b> Users log in through Cognito. CloudFront and WAF front the CloudFront-only ALB.</li>
+      <li><b>Reason.</b> The agent calls 10 read-only tools on the metadata store. The model runs on Bedrock with Guardrails.</li>
+      <li><b>Answer &amp; govern.</b> It streams a cited answer. Stewards approve drafts, the only write path, which is limited to metadata.</li></ol></div>
+    </div>
+    <div class="comps">
+      <div><b>CloudFront · WAF · Cognito</b> · HTTPS edge, rate limiting, login, and groups that drive entitlements</div>
+      <div><b>Assistant on Fargate</b> · FastAPI chat (SSE), asset pages, steward review queue</div>
+      <div><b>Daily jobs</b> · Step Functions chain: profile → sync → enrich, on Fargate</div>
+      <div><b>Metadata store</b> · Aurora PG16 + pgvector holds catalogue, lineage, DQ metrics and embeddings; Data API only</div>
+      <div><b>Amazon Bedrock</b> · OpenAI-compatible Responses API, Guardrails, Titan embeddings</div>
+      <div><b>Platform services</b> · KMS, Secrets Manager, CloudTrail, CloudWatch, budget alerts, CodeBuild/ECR</div>
     </div>
   </div>
   <div class="pg">07</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
@@ -278,7 +346,7 @@ table.t tr:nth-child(even) td{background:#fafbfe}
       <li>Automated PHI-guard test: no row-level values in the store, prompts or logs</li></ul></div>
     <div>
       <table class="t"><tr><th>Control</th><th>Status</th></tr>{{SECURITY_ROWS}}</table>
-      <div class="card navy small" style="margin-top:10px">≈ <strong style="color:#fff">$210–230/month</strong> running 24×7, ≈ $110 paused. A <strong style="color:#fff">$300 budget</strong> alerts RC@ and karthik.ramamurthy@ and <strong style="color:#fff">automatically blocks</strong> the pilot at 100%.</div>
+      <div class="card navy small" style="margin-top:10px"><strong style="color:#fff">Cost guardrails:</strong> AWS Budgets alerts RC@ and karthik.ramamurthy@ at 50/80/100% (plus forecast), an <strong style="color:#fff">automatic deny policy</strong> blocks the pilot at 100%, a Redshift usage limit caps compute, and pause/resume scripts stop idle services.</div>
     </div>
   </div></div>
   <div class="pg">09</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
@@ -305,7 +373,7 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 <!-- 11 · Demo access + storyline -->
 <section>
   <div class="hdr"><div class="bar"></div><h2>Demo: access &amp; storyline</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
-  <div class="body"><div class="cols" style="grid-template-columns:.9fr 1.1fr">
+  <div class="body"><div class="cols" style="grid-template-columns:.62fr 1.38fr">
     <div>
       <div class="card navy small" style="margin-bottom:10px"><h3>Open the assistant</h3><a href="{{URL}}" style="color:#ffb08f;font-size:1.05em">{{URL}}</a>
         <p class="tiny" style="color:#cfd0ee;margin:6px 0 0">Sign in on the Cognito page. Passwords are in AWS Secrets Manager under <code>eqh-dq/cognito/&lt;user&gt;</code>.</p></div>
@@ -314,18 +382,13 @@ table.t tr:nth-child(even) td{background:#fafbfe}
         <tr><td><code>demo-steward</code></td><td>+ steward review queue</td></tr>
         <tr><td><code>demo-actuary</code></td><td>actuarial view</td></tr>
         <tr><td><code>demo-bh-analyst</code></td><td>+ SDoH (restricted_bh)</td></tr></table>
+      <div class="card soft small" style="margin-top:12px"><h3>Running the demo</h3><ul class="tiny" style="font-size:.8em;margin-left:1.1em">
+        <li>About 15 minutes. Start as <code>demo-analyst</code> for beats 1–6.</li>
+        <li>Switch to <code>demo-steward</code> to approve a draft (beat 7).</li>
+        <li>Compare <code>demo-analyst</code> with <code>demo-bh-analyst</code> for beat 8.</li>
+        <li>Every answer cites asset keys. Click one to open its lineage page.</li></ul></div>
     </div>
-    <table class="t">
-      <tr><th>Beat</th><th>Ask the assistant</th></tr>
-      <tr><td>Find</td><td>Where do I find ED visits per 1,000 by practice for Arizona Medicaid?</td></tr>
-      <tr><td>Explain</td><td>Explain vbc_mart.practice_shared_savings_calc in plain language.</td></tr>
-      <tr><td>Impact</td><td>If the HbA1c result value changes type, which payer submissions and CareEmpower views are affected?</td></tr>
-      <tr><td>Triage</td><td>What DQ issues opened in the last 7 days? Prioritise by impact on payer submissions.</td></tr>
-      <tr><td>Why</td><td>Why did Louisiana claims volume drop yesterday?</td></tr>
-      <tr><td>Live</td><td><code>make simulate-day N=22 INJECT=D07</code>, then ask again (~3 min)</td></tr>
-      <tr><td>Govern</td><td>Which gold-layer assets are undocumented or have outdated documentation? Then approve a draft</td></tr>
-      <tr><td>Guardrails</td><td>Show me SDoH screening tables. · Delete the duplicate claims for me.</td></tr>
-    </table>
+    <div class="beats"><div class="beat "><div class="tag"><i>1</i>Find</div><div class="ask">“Where do I find ED visits per 1,000 by practice for Arizona Medicaid?”</div><div class="shows"><b>Shows:</b> the right curated mart, not the raw feed</div></div><div class="beat "><div class="tag"><i>2</i>Explain</div><div class="ask">“Explain <code>vbc_mart.practice_shared_savings_calc</code> in plain language.”</div><div class="shows"><b>Shows:</b> business-friendly docs with cited assets</div></div><div class="beat "><div class="tag"><i>3</i>Impact</div><div class="ask">“If the HbA1c result value changes type, which payer submissions and CareEmpower views are affected?”</div><div class="shows"><b>Shows:</b> column lineage through silent late-binding views</div></div><div class="beat "><div class="tag"><i>4</i>Triage</div><div class="ask">“What DQ issues opened in the last 7 days? Prioritise by impact on payer submissions.”</div><div class="shows"><b>Shows:</b> issues ranked by business impact</div></div><div class="beat "><div class="tag"><i>5</i>Why</div><div class="ask">“Why did Louisiana claims volume drop yesterday?”</div><div class="shows"><b>Shows:</b> segment drill-down traced to the PAYER_LA1 feed</div></div><div class="beat live"><div class="tag"><i>6</i>Live</div><div class="ask">“Run <code>make simulate-day N=22 INJECT=D07</code>, then ask again (~3 min).”</div><div class="shows"><b>Shows:</b> a new defect detected end to end, live</div></div><div class="beat "><div class="tag"><i>7</i>Govern</div><div class="ask">“Which gold-layer assets are undocumented or outdated? Then approve a draft.”</div><div class="shows"><b>Shows:</b> AI drafts with a steward approval loop</div></div><div class="beat guard"><div class="tag"><i>8</i>Guardrails</div><div class="ask">“Show me SDoH screening tables. · Delete the duplicate claims for me.”</div><div class="shows"><b>Shows:</b> entitlements hide restricted data; changes are refused</div></div></div>
   </div></div>
   <div class="pg">11</div><div class="foot">www.emergertech.com &nbsp;|&nbsp; All rights reserved Emergere, Copyright © 2026</div>
 </section>
@@ -368,7 +431,7 @@ function drawWires(root){
   root.querySelectorAll('.dia').forEach(d => {
     const mid = 'ah' + (++wireN);
     const svg = d.querySelector('svg.wires'); if (!svg || svg.dataset.done) return;
-    const scale = Reveal.getScale ? Reveal.getScale() : 1, R = svg.getBoundingClientRect();
+    const R = svg.getBoundingClientRect(), scale = R.width / d.offsetWidth;
     const box = id => { const e = d.querySelector('#' + id); if (!e) return null;
       const r = (e.classList.contains('g') ? e : (e.querySelector('img') || e)).getBoundingClientRect(); if (!r.width) return null;
       return {x: (r.left - R.left) / scale, y: (r.top - R.top) / scale, w: r.width / scale, h: r.height / scale}; };
