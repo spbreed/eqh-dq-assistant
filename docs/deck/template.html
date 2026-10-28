@@ -139,7 +139,7 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 
 <!-- 3 · Current AWS platform -->
 <section>
-  <div class="hdr"><div class="bar"></div><h2>Today's AWS data platform</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="hdr"><div class="bar"></div><h2>Current architecture: Medallion</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
   <div class="body">
     <div class="archg"><div class="diaw" style="height:340px">
     <div class="dia" style="transform:scale(.72)" data-edges="s1>raw,s2>raw,s3>raw,raw>glue,glue>silver,silver>rs,rs>c1,rs>c2,rs>c3,rs>share,share>c4,cat~raw,dq~silver">
@@ -150,12 +150,12 @@ table.t tr:nth-child(even) td{background:#fafbfe}
       <div class="n" id="s3" style="left:15px;top:340px"><img src="{{ICON:GenericApplication}}"><b>EHR · CareEmpower</b><small>labs · CHW · SDoH</small></div>
       <div class="g cloud" style="left:200px;top:0;width:790px;height:470px"><div class="gl"><img src="{{ICON:AWSCloudlogo}}">AWS Cloud</div></div>
       <div class="g region" style="left:215px;top:36px;width:760px;height:420px"><div class="gl">Region us-east-1</div></div>
-      <div class="n" id="raw" style="left:235px;top:90px"><img src="{{ICON:AmazonSimpleStorageService}}"><b>Raw zone</b><small>Amazon S3 · 47 payer feeds</small></div>
+      <div class="n" id="raw" style="left:235px;top:90px"><img src="{{ICON:AmazonSimpleStorageService}}"><b>Bronze · raw</b><small>Amazon S3 · 47 payer feeds</small></div>
       <div class="n" id="cat" style="left:235px;top:300px"><img src="{{ICON:AWSGlueDataCatalog}}"><b>Glue Data Catalog</b><small>eqh_raw · eqh_silver</small></div>
       <div class="n" id="glue" style="left:420px;top:90px"><img src="{{ICON:AWSGlue}}"><b>AWS Glue</b><small>conformance jobs</small></div>
-      <div class="n" id="silver" style="left:600px;top:90px"><img src="{{ICON:AmazonSimpleStorageService}}"><b>Silver zone</b><small>Amazon S3 · Parquet</small></div>
+      <div class="n" id="silver" style="left:600px;top:90px"><img src="{{ICON:AmazonSimpleStorageService}}"><b>Silver · conformed</b><small>Amazon S3 · Parquet</small></div>
       <div class="n" id="dq" style="left:600px;top:300px"><img src="{{ICON:AWSGlueDataQuality}}"><b>Glue Data Quality</b><small>DQDL rulesets</small></div>
-      <div class="n" id="rs" style="left:800px;top:90px"><img src="{{ICON:AmazonRedshift}}"><b>Redshift Serverless</b><small>core · careempower · vbc_mart · outbound</small></div>
+      <div class="n" id="rs" style="left:800px;top:90px"><img src="{{ICON:AmazonRedshift}}"><b>Gold · Redshift</b><small>core · careempower · vbc_mart · outbound</small></div>
       <div class="n" id="share" style="left:800px;top:300px"><img src="{{ICON:AmazonRedshiftDataSharingGovernance}}"><b>Datashares</b><small>actuarial · finance</small></div>
       <div class="g ext" style="left:1020px;top:20px;width:180px;height:440px"><div class="gl">Consumers</div></div>
       <div class="n" id="c1" style="left:1040px;top:44px"><img src="{{ICON:Officebuilding}}"><b>Payer submissions</b><small>SFTP</small></div>
@@ -167,14 +167,14 @@ table.t tr:nth-child(even) td{background:#fafbfe}
       <div class="stp" style="left:985px;top:60px">5</div>
     </div></div>
     <div><h3>Workflow</h3><ol class="flow">
-      <li><b>Land.</b> 8 health plans, state HIEs and the EHR/CareEmpower drop daily files into the S3 raw zone (47 feeds, each with its own quirks).</li>
+      <li><b>Land.</b> 8 health plans, state HIEs and the EHR/CareEmpower drop daily files into the S3 bronze (raw) zone (47 feeds, each with its own quirks).</li>
       <li><b>Catalogue.</b> The Glue Data Catalog registers raw and silver tables and their schemas.</li>
       <li><b>Conform &amp; check.</b> Glue jobs turn raw files into silver Parquet; Glue Data Quality rulesets test them.</li>
-      <li><b>Model.</b> Redshift loads <code>core</code>, then builds marts and late-binding views.</li>
+      <li><b>Model (gold).</b> Redshift loads <code>core</code>, then builds marts and late-binding views.</li>
       <li><b>Deliver.</b> Payer submissions, practice scorecards, the CareEmpower panel feed and datashares go out.</li></ol></div>
     </div>
     <div class="comps">
-      <div><b>Amazon S3 (raw / silver)</b> · landing zone for payer files; conformed Parquet layer</div>
+      <div><b>Amazon S3 (bronze / silver)</b> · landing zone for payer files; conformed Parquet layer</div>
       <div><b>AWS Glue + Data Catalog</b> · conformance jobs and the schema registry for raw and silver</div>
       <div><b>Glue Data Quality</b> · DQDL rules for completeness, validity and freshness</div>
       <div><b>Redshift Serverless</b> · <code>core</code> tables plus <code>vbc_mart</code>, <code>careempower</code>, <code>outbound</code> views</div>
@@ -244,7 +244,7 @@ table.t tr:nth-child(even) td{background:#fafbfe}
 
 <!-- 7 · Target AWS architecture -->
 <section>
-  <div class="hdr"><div class="bar"></div><h2>Target AWS architecture</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
+  <div class="hdr"><div class="bar"></div><h2>Target architecture: Medallion + Agent</h2><img class="mark" src="{{MARK}}" alt=""></div><div class="rule"></div>
   <div class="body">
     <div class="archg"><div class="diaw" style="height:346px">
     <div class="dia" style="height:478px;transform:scale(.72)" data-edges="users>cf,cf>alb,alb>app,app>aur,app>br,jobs>aur,jobs>br,sch>sfn,sfn>jobs,jobs>plat,cog~cf,waf~cf">
@@ -265,7 +265,7 @@ table.t tr:nth-child(even) td{background:#fafbfe}
       <div class="n" id="br" style="left:900px;top:70px;width:160px"><img src="{{ICON:AmazonBedrock}}"><b>Amazon Bedrock</b><small>OpenAI Responses API (mantle) · Guardrails · Titan embeddings</small></div>
       <div class="n sm" id="sch" style="left:880px;top:300px"><img src="{{ICON:AmazonEventBridgeScheduler}}"><b>Scheduler</b><small>06:00 Phoenix</small></div>
       <div class="n sm" id="sfn" style="left:1000px;top:300px"><img src="{{ICON:AWSStepFunctions}}"><b>Step Functions</b><small>daily chain</small></div>
-      <div class="g box" style="left:1000px;top:170px;width:175px;height:110px"><div class="gl">Existing platform · read-only</div></div>
+      <div class="g box" style="left:1000px;top:170px;width:175px;height:110px"><div class="gl">Medallion · read-only</div></div>
       <div class="n sm" id="plat" style="left:1030px;top:194px"><img src="{{ICON:AmazonRedshift}}"><b>Redshift · Glue · S3</b></div>
       <div style="position:absolute;left:280px;top:398px;width:900px;display:flex;gap:18px;align-items:center;font-size:11px;color:#5d6278">
         <b style="color:#232f3e">Platform services</b>
