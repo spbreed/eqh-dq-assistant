@@ -194,3 +194,107 @@ Go back to the three questions from the hook and answer each one on the glass:
 - Cut slide 4 (data model) to one sentence, and skip slide 6.
 - Skip the *Explain* question at 9:15 (the asset page shows up again in the steward step).
 - In the AWS segment, show only the terminal, CloudFormation and the Guardrail.
+
+---
+
+## Studio setup: OBS + Teams on one monitor
+
+### The idea: share once, never re-share
+Toggling Teams screen sharing on and off mid-pitch is the slow, fragile part. On one monitor there's no need to do
+it at all:
+
+1. **Start one Teams share of your *entire screen*** at 0:00 and leave it running for all 20 minutes.
+2. **Lightboard mode:** an OBS *projector* window fills your screen with the lightboard. The audience sees it at
+   full screen-share quality, and you see it as your confidence monitor while you're at the glass.
+3. **Screen mode:** one key minimises the projector and brings the deck, app, AWS console or terminal to the front,
+   so the audience sees that. At the same time, OBS switches to a **Presenter** close-up that feeds your Teams
+   camera tile, so you stay visible in the small tile while you drive the browser.
+
+Switching is **one keystroke** (`scripts/pitch_switch.ahk`, AutoHotkey v2), with no Teams menus and no window picker.
+
+```
+  LIGHTBOARD MODE  (Ctrl+Alt+L)               SCREEN MODE  (Ctrl+Alt+D / A / W / T)
+  ┌──────────── your monitor ───────────┐     ┌──────────── your monitor ───────────┐
+  │  OBS projector, full screen          │     │  Chrome: deck / app / AWS, terminal  │
+  │  = lightboard (shared to Teams)      │     │  (shared to Teams)                    │
+  └──────────────────────────────────────┘     └──────────────────────────────────────┘
+  Teams camera tile: OBS Virtual Camera        Teams camera tile: OBS "Presenter" close-up
+```
+
+### OBS settings (one-time)
+| Where | Setting |
+|---|---|
+| Settings → Video | Base and output **1920×1080**, 30 fps |
+| Settings → General | **Hide OBS from screen capture: OFF**. The projector *is* what's being shared. Turn off "Show confirmation on exit". |
+| Settings → Audio | Desktop audio and mic **disabled**. Your mic goes straight into Teams, which avoids echo and lip-sync lag. |
+| Studio Mode | **Off**, so hotkeys switch the live output instantly |
+| Settings → Hotkeys | "Switch to scene **LB-Full**" = `Ctrl+Alt+F1`, "Switch to scene **Presenter**" = `Ctrl+Alt+F2` |
+| Controls | **Start Virtual Camera** before joining the meeting |
+
+### OBS scenes
+| Scene | Sources | Used for |
+|---|---|---|
+| **LB-Full** | Lightboard camera (Video Capture Device, 1920×1080), Transform → **Flip Horizontal** so your writing reads correctly. Filters: Color Correction (contrast +0.2, gamma −0.1) and Sharpen. Optional small Emergere logo, bottom right. | Lightboard segments |
+| **Presenter** | The *same* camera source (add it as an existing source, not a new one), cropped and scaled to head and shoulders | Teams camera tile while you're in screen mode |
+| **Holding** | Emergere logo with "Starting shortly" | Before the meeting starts, and if something breaks |
+
+Then **right-click the preview → Windowed Projector (Program)**, and press `Ctrl+Alt+P` once to make it borderless
+and maximised. (Use a *windowed* projector, not a full-screen one: only a windowed one can be minimised and
+restored by the script.)
+
+### Teams settings
+- Camera: **OBS Virtual Camera**. Background effects **off**. Your self-view looks mirrored; attendees see it correctly.
+- Microphone: your real mic, not OBS.
+- Turn on Windows **Focus assist / Do not disturb** so no notifications appear in the share. Set the taskbar to auto-hide.
+- At 0:00: **Share → Screen** (the entire screen, *not* a window, so switching windows never breaks the share). Leave "Include sound" off.
+- Ask the organiser to **spotlight** you, or pin yourself, so your tile stays visible next to the share.
+
+### Browser and windows
+- **Chrome windows:** the deck in one window. The app in profile A (`demo-analyst`), profile B (`demo-steward`)
+  and profile C (`demo-bh-analyst`). The AWS console tabs in their own window.
+- Set browser zoom to **125–150%** on the app and console tabs so attendees can read them. Present the deck with `F`
+  (reveal.js full screen).
+- Have Windows Terminal open with the live-day command typed but not run.
+
+### Hotkeys (`scripts/pitch_switch.ahk`)
+| Key | Result |
+|---|---|
+| `Ctrl+Alt+L` | **Lightboard mode:** scene LB-Full; projector restored full screen and in front |
+| `Ctrl+Alt+D` | **Deck:** scene Presenter; projector minimised; deck window in front |
+| `Ctrl+Alt+A` | **App:** the same, with the assistant window in front. Use `Alt+Tab` between the analyst and steward profiles. |
+| `Ctrl+Alt+W` | **AWS console** window |
+| `Ctrl+Alt+T` | **Terminal** |
+
+**At the glass:** you're away from the keyboard during lightboard segments, so put the keys within reach. A small
+programmable macro pad (or a Stream Deck) mapped to `Ctrl+Alt+L/D/A/W/T` works well. Don't use a slide clicker's
+"black screen" key: it sends `B` or `.`, which would type into the app.
+
+### Switch cues for this script
+| Time | Press | Audience sees |
+|---|---|---|
+| 0:00 | `Ctrl+Alt+L` | Lightboard: the hook |
+| 2:00 | `Ctrl+Alt+D` | Slides 2–5 |
+| 5:00 | `Ctrl+Alt+L` | Lightboard: Medallion + Agent |
+| 7:00 | `Ctrl+Alt+D` | Slides 7–8 |
+| 8:30 | `Ctrl+Alt+A` | App (analyst) |
+| 11:00 | `Ctrl+Alt+T`, Enter, then `Ctrl+Alt+L` | Live day starts; lightboard "day 22 ⏳" |
+| 12:00 | `Ctrl+Alt+A` | App: triage and root cause |
+| 14:00 | `Ctrl+Alt+T`, then `Ctrl+Alt+W` | Terminal log, then the AWS console tabs |
+| 15:00 | `Ctrl+Alt+A` (`Alt+Tab` to the steward profile at 16:00) | App: live answer, govern, guardrails |
+| 17:00 | `Ctrl+Alt+D` | Slides 9–10 |
+| 18:30 | `Ctrl+Alt+L` | Lightboard close |
+| 19:45 | `Ctrl+Alt+D` | Slide 15, Thank you |
+
+### Rehearse it once (10 minutes)
+1. Join the meeting from your **phone** as a second attendee, muted, so you can see exactly what the audience sees.
+2. Start the screen share, run every hotkey in the cue table, and check that each switch takes under a second. Also
+   check that the Teams meeting window and toolbar don't show up on the phone.
+3. Write on the glass and confirm the text reads left-to-right on the phone. If it's backwards, toggle Flip Horizontal.
+4. If OBS ignores the script's scene keys, test the OBS hotkeys by hand first. Then run the script as administrator,
+   or raise `SetKeyDelay`.
+
+**If it goes wrong:** press `Ctrl+Alt+D`. The deck is always a safe screen while you fix it. If OBS itself crashes,
+the screen share keeps running: present from the deck and draw the lightboard parts on slides 3 and 7 instead.
+
+**On a Mac:** the same approach works. Use Keyboard Maestro or Hammerspoon instead of AutoHotkey. Grant OBS and Teams
+*Screen Recording* permission and OBS *Accessibility* permission (needed for global hotkeys).
