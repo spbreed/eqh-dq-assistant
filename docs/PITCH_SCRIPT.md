@@ -201,7 +201,7 @@ Go back to the three questions from the hook and answer each one on the glass:
 ## Transition cheat-sheet (memorise these lines)
 | From → To | Line |
 |---|---|
-| LB → SL | "Let me show you the platform we modelled this on." |
+| LB → SL | "Let me show you the kind of platform this runs on." |
 | SL → LB | "What would *good* look like? Let me draw it." |
 | LB → SL | "Here's the same picture as real AWS services." |
 | SL → APP | "Enough architecture. Let's ask it something." |
