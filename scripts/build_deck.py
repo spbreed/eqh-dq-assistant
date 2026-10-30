@@ -93,8 +93,10 @@ def main() -> None:
            ("CloudTrail + Bedrock invocation logging", True), ("Redshift RPU usage limit", True),
            ("PHI guard: no row values in store / prompts / logs", True),
            ("IAM-user keys > 30 days (account-level, outside pilot)", False)]
-    sec_rows = "".join(f"<tr><td>{html.escape(n)}</td><td>{'<span class=\"pill ok\">pass</span>' if ok else '<span class=\"pill or\">flagged</span>'}</td></tr>"
-                       for n, ok in sec)
+    n_ok = sum(1 for _, ok in sec if ok)
+    sec_pills = (f'<span class="pill ok">✔ {n_ok} pilot controls pass</span> ' + " ".join(
+        f'<span class="pill">{html.escape(n)}</span>' for n, ok in sec if ok) + "".join(
+        f' <span class="pill or">⚑ {html.escape(n)}</span>' for n, ok in sec if not ok))
 
     ev = json.loads((ROOT / "build" / "eval_latest.json").read_text())
     sm, rows_by_id = ev["summary"], {r["id"]: r for r in ev["rows"]}
@@ -107,7 +109,8 @@ def main() -> None:
     kpis = "".join([
         kpi(f"{100 * sm['answer_correct']:.0f}%", "answer correctness", "≥ 85%", tm["answer_correct"]),
         kpi(f"{100 * sm['citation_precision']:.0f}%", "citation precision", "≥ 90%", tm["citation_precision"]),
-        kpi(f"{100 * sm['refusal_correct']:.0f}% / {100 * sm['entitlement_correct']:.0f}%",
+        kpi(f"{100 * sm['refusal_correct']:.0f}%" if sm['refusal_correct'] == sm['entitlement_correct']
+            else f"{100 * sm['refusal_correct']:.0f}% / {100 * sm['entitlement_correct']:.0f}%",
             "refusal / entitlement", "100%", tm["refusal_correct"] and tm["entitlement_correct"]),
         kpi(f"{sm['p95_latency_s']:.1f}s", "p95 latency", "≤ 15 s", tm["p95_latency_s"])])
     cats = "<tr><th>Category</th><th>n</th><th>Correct</th></tr>" + "".join(
@@ -139,7 +142,7 @@ def main() -> None:
         "{{MARK}}": data_uri(ROOT / "docs" / "assets" / "emergere-mark.png"),
         "{{URL}}": url, "{{DATE}}": date.today().strftime("%B %Y"),
         "{{N_ASSETS}}": str(n_assets), "{{N_EDGES}}": str(n_edges), "{{N_METRICS}}": f"{int(n_metrics):,}",
-        "{{N_DRAFTS}}": str(n_drafts), "{{DEFECT_ROWS}}": "\n".join(rows), "{{SECURITY_ROWS}}": sec_rows,
+        "{{N_DRAFTS}}": str(n_drafts), "{{DEFECT_ROWS}}": "\n".join(rows), "{{SECURITY_PILLS}}": sec_pills,
         "{{EVAL_KPIS}}": kpis, "{{EVAL_CATS}}": cats, "{{EVAL_MODEL}}": ev["meta"]["chat_model"],
         "{{DETECTED_SUMMARY}}": (f"<strong>{detected}/{n_issue_types}</strong> issue-type defects detected on the day "
                                  f"they were injected (stale, volume, nulls, duplicates, RI orphans, overlaps, invalid "
