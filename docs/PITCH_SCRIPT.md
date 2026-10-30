@@ -42,21 +42,41 @@ There are four modes in this pitch. Each one has a job: **Lightboard** for the s
 
 ## The script
 
-### 0:00–2:00 · ✏️ LB: the hook ("a quiet failure")
-**Draw:** on the left, a box "Payer file (837)"; an arrow to a cylinder "Data platform"; an arrow to a box on the
-right, "Quality submission → Health plan". Then draw a small ✗ on one column inside the cylinder.
+### 0:00–2:00 · ✏️ LB: the hook ("one lab value, three people")
+**Draw**, left to right across the glass, as you tell the story:
+1. **Provider** (left): a small clinic icon, labelled "Community health center, Phoenix · Dr. Patel".
+2. **Consumer** (under the clinic): a stick figure, labelled "Maria, 52, Medicaid, type 2 diabetes".
+3. **The platform** (middle): a cylinder labelled "VBC data platform".
+4. **Payer** (right): a box labelled "Medicaid health plan, Arizona · Quality team".
+5. Arrows: clinic → cylinder labelled "lab result HbA1c 7.2"; cylinder → plan labelled "quality file".
 
-> "This is a value-based-care company. It takes financial risk with health plans, and it gets paid on quality.
-> Every night, files from 20-plus health plans flow through a data platform and out to payer submissions, practice
-> scorecards and the care-management app.
+> "Let me tell you about three people.
 >
-> Now one payer quietly changes a column type." *(draw the ✗)* "Nothing crashes. The views keep compiling. The
-> submission goes out with wrong numbers, and three weeks later someone in finance asks why shared savings moved.
+> **Maria** is 52, on Medicaid in Arizona, and has type 2 diabetes. *(draw Maria)* Her doctor, **Dr. Patel**, works
+> at a community health center in Phoenix *(draw the clinic)* and has been working with her all year. Last month
+> her HbA1c came back at 7.2. Her diabetes is under control, a real win.
+>
+> That lab result flows into a value-based-care data platform *(draw the cylinder and arrow)*, which every month
+> sends a supplemental quality file to **Maria's health plan** *(draw the plan)*. The plan's quality team uses it to
+> score diabetes control. That score decides the clinic's quality bonus and the shared savings.
+>
+> Now, one night, upstream, the lab feed changes the result field from a number to text." *(draw a ✗ on the arrow
+> into the cylinder)* "Nothing crashes. The views keep compiling. But Maria's 7.2 no longer lands as a number, so the
+> quality file says her diabetes is *not controlled*. *(cross out 7.2 and write '?')*
+>
+> Multiply Maria by a few thousand patients. Dr. Patel's clinic looks worse than it is, the plan pays less, and the
+> care manager is told to chase patients who are already doing fine. Three weeks later, someone in finance asks why
+> shared savings moved.
 >
 > So the real questions are: *who knew, how fast, and what else broke?*" *(write "Who? How fast? What else?" under
 > the drawing)*
 
-**Transition → SL:** "Let me show you the platform we modelled this on." *(turn to the screen, slide 2)*
+*(The people and the clinic are illustrative, not a real case or organisation. The mechanics are real: HbA1c control
+is a standard diabetes quality measure that plans score from claims, lab results and supplemental data. This exact
+failure is planted in the demo as the lab-result type change behind a late-binding view, and it's the question
+you'll ask at 10:00.)*
+
+**Transition → SL:** "Let me show you the kind of platform this runs on." *(turn to the screen, slide 2)*
 
 ### 2:00–5:00 · 🖥️ SL: today and the pain (slides 2 → 5)
 - **Slide 2, Customer context (30 s):** "Medicaid-first, five states, 750k members, and every payer sends different
@@ -102,7 +122,7 @@ right, "Quality submission → Health plan". Then draw a small ✗ on one column
 |---|---|---|
 | 8:30 | *Where do I find ED visits per 1,000 by practice for Arizona Medicaid?* | It recommends the curated `vbc_mart` view, not the raw feed. Note the citations. |
 | 9:15 | *Explain `vbc_mart.practice_shared_savings_calc` in plain language.* → click the asset chip | **"AI draft – not yet approved"** label; cryptic columns decoded from lineage; the lineage graph |
-| 10:00 | *If the HbA1c result value changes type, which payer submissions and CareEmpower views are affected?* | Column lineage runs through a **late-binding view** to the PAYER_AZ1 submission. "This is the hook from the lightboard. It found the quiet failure." |
+| 10:00 | *If the HbA1c result value changes type, which payer submissions and CareEmpower views are affected?* | Column lineage runs through a **late-binding view** to the PAYER_AZ1 supplemental quality file. "This is Maria's 7.2 from the lightboard. It found the quiet failure before the file went out." |
 
 **Transition → LB/terminal (the kick-off):** "Everything so far is yesterday's data. Let's make *today* happen."
 
@@ -165,6 +185,8 @@ Go back to the three questions from the hook and answer each one on the glass:
 - **Who knew?** → write "the assistant, *same day*"
 - **How fast?** → write "minutes, with citations"
 - **What else broke?** → draw the lineage arrow to "payer submission" and write "ranked by impact"
+- Point back at Maria: "Same night, the assistant flags the type change, traces it to the quality file, and
+  Dr. Patel's 7.2 counts."
 
 > "No replatforming, no access to row data, nothing it can break. It sits beside the medallion platform you already
 > have and makes it explainable.
