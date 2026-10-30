@@ -7,6 +7,7 @@ AWS account `761705103792`, region `us-east-1`. All resources are tagged `projec
 | What | Link |
 |---|---|
 | Assistant (CloudFront, Cognito login) | https://d16or4k2hjq489.cloudfront.net |
+| Pitch deck (reveal.js, always the latest on `main`) | https://raw.githack.com/spbreed/eqh-dq-assistant/refs/heads/main/eqh-dq-assistant.html#/1 |
 | CloudWatch dashboard | https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards/dashboard/eqh-dq-assistant |
 | Step Functions daily pipeline | https://us-east-1.console.aws.amazon.com/states/home?region=us-east-1#/statemachines |
 | Budget `eqh-dq-assistant-monthly` ($300) | https://console.aws.amazon.com/billing/home#/budgets |

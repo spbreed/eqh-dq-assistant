@@ -85,6 +85,7 @@ def main() -> None:
     out.append("## Entry points\n")
     out.append("| What | Link |\n|---|---|")
     out += [f"| Assistant (CloudFront, Cognito login) | {url} |",
+            "| Pitch deck (reveal.js, always the latest on `main`) | https://raw.githack.com/spbreed/eqh-dq-assistant/refs/heads/main/eqh-dq-assistant.html#/1 |",
             f"| CloudWatch dashboard | {C}/cloudwatch/home?region={R}#dashboards/dashboard/eqh-dq-assistant |",
             f"| Step Functions daily pipeline | {C}/states/home?region={R}#/statemachines |",
             f"| Budget `eqh-dq-assistant-monthly` ($300) | https://console.aws.amazon.com/billing/home#/budgets |",
