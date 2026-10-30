@@ -1,6 +1,6 @@
 # eqh-dq-assistant
 
-**▶ View the pitch deck:** https://rawcdn.githack.com/spbreed/eqh-dq-assistant/refs/heads/main/eqh-dq-assistant.html#/1
+**▶ View the pitch deck:** https://raw.githack.com/spbreed/eqh-dq-assistant/refs/heads/main/eqh-dq-assistant.html#/1
 
 **AI Data Quality Assistant — pilot.** A governed, read-only assistant over the metadata and data-quality results of
 a Medicaid-first value-based-care data platform on AWS. It answers questions, explains assets, traces lineage and
