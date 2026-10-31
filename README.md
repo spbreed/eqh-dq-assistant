@@ -20,7 +20,7 @@ pipelines or data. **Prototype – synthetic data only.**
 | `datagen/` | Deterministic synthetic EQH-style platform: 8 fictitious payers × 5 feeds with quirks, 19 silver entities (≈ 3.4 M rows), Redshift marts/late-binding views/datashares, glossary, extract inventory, **14 planted defects** (`seeded_defects.yaml`), 21-day simulation, usage simulator, Glue DQ rulesets, live demo day |
 | `jobs/` | `profiler` (aggregates only) → `daily_sync` (harvest, sqlglot lineage, drift, segmented DQ issues, embeddings) → `enrich` (LLM documentation drafts) · `common/` Data API clients, Bedrock Responses API client (SigV4, bedrock-mantle), embeddings |
 | `metadata_store/` | migrations 001 (reference schema) + 002 (pilot extensions), least-privilege DB roles |
-| `assistant/` | FastAPI service: chat (SSE), asset page (Cytoscape lineage), steward review queue; 10 read-only tools; system prompt |
+| `assistant/` | FastAPI service: chat (SSE) with name autocomplete, starter prompts by domain and follow-up suggestions; asset page (Cytoscape lineage); steward review queue; 10 read-only tools; system prompt |
 | `eval/` | 74 golden questions generated from ground truth; harness scoring tool calls, correctness (LLM judge), citations, refusals/entitlements, latency |
 | `tests/` | unit tests + **PHI-guard** test (no row values in store, prompts, tool results or logs) |
 | `scripts/` | `verify_phase0..8.sh`, `security_selfcheck.py`, `run_task.sh`, `build_image.sh`, pause/resume, destroy, `gen_resources.py`, `build_deck.py` |
