@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Stre
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
-from assistant.app import agent, review
+from assistant.app import agent, review, suggest
 from assistant.app import tools as T
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -149,7 +149,8 @@ async def chat(request: Request, u: dict = Depends(user)):
 
     def work():
         try:
-            agent.answer(q, u["groups"], history, on_event=events.put, user=u["username"])
+            res = agent.answer(q, u["groups"], history, on_event=events.put, user=u["username"])
+            events.put({"type": "followups", "items": suggest.followups(q, res, u["groups"])})
         except Exception as e:  # noqa: BLE001
             log.exception("chat failed")
             events.put({"type": "error", "message": f"The assistant hit an error: {type(e).__name__}"})
@@ -165,6 +166,16 @@ async def chat(request: Request, u: dict = Depends(user)):
             yield f"data: {json.dumps(ev, default=str)}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/api/catalog")
+def api_catalog(u: dict = Depends(user)):
+    return suggest.catalog(T.Ctx(u["groups"]))
+
+
+@app.get("/api/starters")
+def api_starters(u: dict = Depends(user)):
+    return {"domains": suggest.starters(u["groups"])}
 
 
 @app.get("/api/asset")
