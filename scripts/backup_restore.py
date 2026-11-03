@@ -24,6 +24,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,6 +63,14 @@ def bucket(kind: str) -> str:
 
 def sh(*args: str) -> None:
     subprocess.run(args, check=True)
+
+
+def copy_s3(src: str, dst: str) -> None:
+    """Copy an S3 prefix through a local temp dir (download + upload). Server-side CopyObject would be faster, but
+    some egress proxies (e.g. cloud dev sessions) reject it; the pilot's data is a few hundred MB."""
+    with tempfile.TemporaryDirectory(prefix="eqh-dq-copy-") as tmp:
+        sh("aws", "s3", "sync", src, tmp, "--quiet", "--only-show-errors")
+        sh("aws", "s3", "sync", tmp, dst, "--quiet", "--only-show-errors")
 
 
 def put_json(key: str, obj) -> None:
@@ -131,47 +140,68 @@ def backup(args) -> None:
     log.info("counting live state")
     c = counts()
 
-    log.info("Aurora snapshot %s", snap)
-    rds.create_db_cluster_snapshot(DBClusterIdentifier=CLUSTER, DBClusterSnapshotIdentifier=snap, Tags=tags)
-    log.info("Redshift snapshot %s", snap)
-    rss.create_snapshot(namespaceName=NAMESPACE, snapshotName=snap, retentionPeriod=-1,
-                        tags=[{"key": "eqh-dq-backup", "value": bid}])
+    try:
+        log.info("Aurora snapshot %s", snap)
+        rds.create_db_cluster_snapshot(DBClusterIdentifier=CLUSTER, DBClusterSnapshotIdentifier=snap, Tags=tags)
+        log.info("Redshift snapshot %s", snap)
+        rss.create_snapshot(namespaceName=NAMESPACE, snapshotName=snap, retentionPeriod=-1,
+                            tags=[{"key": "eqh-dq-backup", "value": bid}])
 
-    for kind in DATA_BUCKETS:
-        log.info("copy s3://%s -> backup", bucket(kind))
-        sh("aws", "s3", "sync", f"s3://{bucket(kind)}", f"s3://{bucket('backup')}/{prefix}s3/{kind}", "--quiet")
+        for kind in DATA_BUCKETS:
+            log.info("copy s3://%s -> backup", bucket(kind))
+            copy_s3(f"s3://{bucket(kind)}", f"s3://{bucket('backup')}/{prefix}s3/{kind}")
 
-    g = client("glue")
-    for db in GLUE_DBS:
-        tables = [t for p in g.get_paginator("get_tables").paginate(DatabaseName=db) for t in p["TableList"]]
-        out = []
-        for t in tables:
-            parts = [p for pg in g.get_paginator("get_partitions").paginate(DatabaseName=db, TableName=t["Name"])
-                     for p in pg["Partitions"]]
-            out.append({"table": {k: v for k, v in t.items() if k in TABLE_INPUT},
-                        "partitions": [{k: v for k, v in p.items() if k in PARTITION_INPUT} for p in parts]})
-        put_json(f"{prefix}glue/{db}.json", out)
-        log.info("glue %s: %d tables exported", db, len(out))
+        g = client("glue")
+        for db in GLUE_DBS:
+            tables = [t for p in g.get_paginator("get_tables").paginate(DatabaseName=db) for t in p["TableList"]]
+            out = []
+            for t in tables:
+                parts = [p for pg in g.get_paginator("get_partitions").paginate(DatabaseName=db, TableName=t["Name"])
+                         for p in pg["Partitions"]]
+                out.append({"table": {k: v for k, v in t.items() if k in TABLE_INPUT},
+                            "partitions": [{k: v for k, v in p.items() if k in PARTITION_INPUT} for p in parts]})
+            put_json(f"{prefix}glue/{db}.json", out)
+            log.info("glue %s: %d tables exported", db, len(out))
 
-    build = ROOT / "build"
-    if build.exists():
-        log.info("copy build/ -> backup")
-        sh("aws", "s3", "sync", str(build), f"s3://{bucket('backup')}/{prefix}build", "--quiet",
-           "--exclude", "*.log")
+        build = ROOT / "build"
+        if build.exists():
+            log.info("copy build/ -> backup")
+            sh("aws", "s3", "sync", str(build), f"s3://{bucket('backup')}/{prefix}build", "--quiet",
+               "--exclude", "*.log")
 
-    log.info("waiting for snapshots")
-    rds.get_waiter("db_cluster_snapshot_available").wait(DBClusterSnapshotIdentifier=snap,
-                                                          WaiterConfig={"Delay": 20, "MaxAttempts": 90})
-    _wait(lambda: rss.get_snapshot(snapshotName=snap)["snapshot"]["status"], "AVAILABLE", "Redshift snapshot")
+        log.info("waiting for snapshots")
+        rds.get_waiter("db_cluster_snapshot_available").wait(DBClusterSnapshotIdentifier=snap,
+                                                              WaiterConfig={"Delay": 20, "MaxAttempts": 90})
+        _wait(lambda: rss.get_snapshot(snapshotName=snap)["snapshot"]["status"], "AVAILABLE", "Redshift snapshot")
 
-    manifest = {"id": bid, "created_at": datetime.now(timezone.utc).isoformat(), "aurora_snapshot": snap,
-                "redshift_snapshot": snap, "prefix": prefix, "counts": c,
-                "aurora_engine": rds.describe_db_clusters(DBClusterIdentifier=CLUSTER)["DBClusters"][0]["EngineVersion"]}
-    put_json(f"{prefix}manifest.json", manifest)
-    _check_backup(manifest)
-    put_json("LATEST.json", {"manifest": f"{prefix}manifest.json", "id": bid})
+        manifest = {"id": bid, "created_at": datetime.now(timezone.utc).isoformat(), "aurora_snapshot": snap,
+                    "redshift_snapshot": snap, "prefix": prefix, "counts": c,
+                    "aurora_engine": rds.describe_db_clusters(DBClusterIdentifier=CLUSTER)["DBClusters"][0]["EngineVersion"]}
+        put_json(f"{prefix}manifest.json", manifest)
+        _check_backup(manifest)
+        put_json("LATEST.json", {"manifest": f"{prefix}manifest.json", "id": bid})
+    except BaseException:
+        log.error("backup %s failed: discarding its snapshots and copies (LATEST is unchanged)", bid)
+        _discard(snap, prefix)
+        raise
     log.info("backup %s complete and verified", bid)
     print(json.dumps({"backup": bid, "aurora_snapshot": snap, "redshift_snapshot": snap}, indent=1))
+
+
+def _discard(snap: str, prefix: str) -> None:
+    rds, rss = client("rds"), client("redshift-serverless")
+    try:  # an Aurora snapshot can't be deleted while it is still being created
+        rds.get_waiter("db_cluster_snapshot_available").wait(DBClusterSnapshotIdentifier=snap,
+                                                              WaiterConfig={"Delay": 20, "MaxAttempts": 90})
+        rds.delete_db_cluster_snapshot(DBClusterSnapshotIdentifier=snap)
+    except Exception as e:  # noqa: BLE001
+        log.warning("Aurora snapshot %s not deleted: %s", snap, e)
+    try:
+        _wait(lambda: rss.get_snapshot(snapshotName=snap)["snapshot"]["status"], "AVAILABLE", "Redshift snapshot")
+        rss.delete_snapshot(snapshotName=snap)
+    except Exception as e:  # noqa: BLE001
+        log.warning("Redshift snapshot %s not deleted: %s", snap, e)
+    subprocess.run(["aws", "s3", "rm", f"s3://{bucket('backup')}/{prefix}", "--recursive", "--quiet"], check=False)
 
 
 def _wait(get, want: str, what: str, timeout: int = 3600) -> None:
@@ -242,7 +272,7 @@ def restore_data(args) -> None:
 
     for kind in DATA_BUCKETS:
         log.info("copy backup -> s3://%s", bucket(kind))
-        sh("aws", "s3", "sync", f"s3://{bucket('backup')}/{m['prefix']}s3/{kind}", f"s3://{bucket(kind)}", "--quiet")
+        copy_s3(f"s3://{bucket('backup')}/{m['prefix']}s3/{kind}", f"s3://{bucket(kind)}")
 
     g = client("glue")
     for db in GLUE_DBS:
