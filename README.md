@@ -35,6 +35,11 @@ make simulate-day N=22 INJECT=D07      # live demo day
 make pause | make resume | make destroy
 ```
 
+## Status (2026-11-03): parked
+The pilot is **parked** between demos: only `EqhDqSecurity` (CMK, roles, budget, trail, backup bucket) and backup
+`20261103-151029` (Aurora + Redshift snapshots) remain, at about $2–3/month. Run `make restore` (~1 h) before the next
+demo; it rebuilds everything from the backup and gives a new assistant URL (see [docs/RUNBOOK.md](docs/RUNBOOK.md) §7b).
+
 ## Status (2026-10-27)
 Deployed to account `761705103792` (us-east-1). All 14 planted defects are detected or answerable; the eval meets every
 target (91.9 % correct, 96.3 % citation precision, 100 % refusal/entitlement, p95 9.0 s); Phase 1–8
