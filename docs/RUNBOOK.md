@@ -68,6 +68,25 @@ runs usage → profiler → daily_sync (~3 min). Supported injections: D01 D02 D
   (or reset the action in the Budgets console) after raising the budget.
 - Redshift Serverless usage limit: 300 RPU-hours/month → workgroup deactivated.
 
+## 7b. Park between demos (backup → park → restore)
+Keeps the exact demo state for about $1–2/month instead of running or re-seeding it.
+
+| Step | Command | Time | What happens |
+|---|---|---|---|
+| Backup | `make backup` | ~10–15 min | Aurora and Redshift manual snapshots (`eqh-dq-backup-<id>`), the 5 data buckets, the Glue `eqh_raw`/`eqh_silver` tables and partitions, and `build/` copied to `s3://eqh-dq-<acct>-backup/<id>/`. Writes a manifest with counts, verifies the copy, then updates `LATEST.json`. |
+| Check | `make backup-status` | seconds | Latest backup and whether both snapshots still exist |
+| Park | `make park` (🛑 typed confirmation) | ~20 min | Needs a backup under 12 h old. Destroys every stack except **EqhDqSecurity**: the CMK that encrypts the snapshots, the workload roles that Redshift grants refer to, the budget, the trail and the backup bucket stay. |
+| Restore | `make restore` (🛑) | ~45–60 min | Image build, `cdk deploy --all` with Aurora created **from the snapshot** (`config/restore_state.json`), Redshift snapshot restored into the new namespace, S3/Glue/`build/` copied back, DB roles and demo passwords reset, counts verified against the manifest, `Resources.md` and the deck regenerated. |
+
+After a restore:
+- **The assistant URL changes** (new CloudFront distribution). Commit `config/restore_state.json`, `Resources.md`
+  and `eqh-dq-assistant.html`.
+- **Keep `config/restore_state.json` while the restored cluster exists.** Removing it, or changing the snapshot id,
+  would make CloudFormation replace the cluster. `make park` and `make destroy` remove it.
+- Do not delete the snapshot named in `config/restore_state.json` while that cluster exists.
+
+`make destroy` still removes everything, including backup snapshots and the backup bucket, from either state.
+
 ## 8. Failures
 | Symptom | Fix |
 |---|---|
