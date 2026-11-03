@@ -1,4 +1,8 @@
-"""KMS CMK, workload IAM roles, CloudTrail, Bedrock invocation logging, AWS Budget + budget action."""
+"""KMS CMK, workload IAM roles, CloudTrail, Bedrock invocation logging, AWS Budget + budget action, backup bucket.
+
+This stack stays deployed while the pilot is parked (`make park`): the CMK that encrypts the Aurora and Redshift
+snapshots, the role names Redshift grants refer to, and the backup bucket must outlive the other stacks.
+"""
 from __future__ import annotations
 
 import aws_cdk as cdk
@@ -51,6 +55,15 @@ class SecurityStack(cdk.Stack):
         self._budget(cfg)
         self._cloudtrail(cfg)
         self._bedrock_logging()
+
+        # Backups taken by `make backup` (S3 copies, Glue catalog export, local build state, manifest). Removed
+        # only by `make destroy`, which also deletes the snapshots.
+        self.backup_bucket = s3.Bucket(
+            self, "BackupBucket", bucket_name=pilot_config.bucket_name(cfg, "backup"),
+            encryption=s3.BucketEncryption.KMS, encryption_key=self.key, bucket_key_enabled=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL, enforce_ssl=True,
+            removal_policy=cdk.RemovalPolicy.DESTROY, auto_delete_objects=True)
+        cdk.CfnOutput(self, "BackupBucketName", value=self.backup_bucket.bucket_name)
 
     # ---------------------------------------------------------------- budget + limits
     def _budget(self, cfg: dict) -> None:

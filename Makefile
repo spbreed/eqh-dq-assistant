@@ -8,7 +8,8 @@ N ?= 22
 INJECT ?=
 
 .PHONY: help venv bootstrap image deploy-all deploy seed simulate simulate-day redetect enrich eval eval-local \
-        test test-aws verify security-check pause resume destroy smoke
+        test test-aws verify security-check pause resume destroy smoke \
+        backup backup-status park restore
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -68,6 +69,18 @@ pause:           ## scale down: Aurora min 0 ACU (auto-pause), assistant to 0 ta
 
 resume:          ## scale back up
 	$(ENV) scripts/pause_resume.sh resume
+
+backup:          ## Aurora + Redshift snapshots, S3, Glue catalog and build/ copied to the backup bucket; verified
+	$(ENV) python scripts/backup_restore.py backup
+
+backup-status:   ## latest backup and whether its snapshots exist
+	$(ENV) python scripts/backup_restore.py status
+
+park:            ## 🛑 typed confirmation -> destroy all stacks except EqhDqSecurity; keeps the latest backup (needs `make backup` < 12 h)
+	$(ENV) scripts/park.sh
+
+restore:         ## 🛑 rebuild from the latest backup: image, deploy-all (Aurora from snapshot), Redshift/S3/Glue restore, verify
+	$(ENV) scripts/restore.sh
 
 destroy:         ## 🛑 typed confirmation -> empty buckets -> delete snapshots -> cdk destroy --all -> verify
 	$(ENV) scripts/destroy.sh
