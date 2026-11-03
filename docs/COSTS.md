@@ -42,6 +42,18 @@ pricing. At pilot volumes, chat + enrichment + eval is estimated at $10–30/mon
 - **`make pause`**: also scales the assistant to 0 tasks and disables the scheduler → ≈ $110/month (NAT, endpoints,
   ALB, WAF remain). `make destroy` removes everything.
 
+## Parked between demos (`make backup` + `make park`)
+| Item | ≈ $/month |
+|---|---|
+| KMS CMK (kept so the snapshots stay readable) | 1.00 |
+| Redshift Serverless manual snapshot (≈ 44 GB reported backup size) | ≈ 1.05 |
+| Aurora manual cluster snapshot (< 1 GB) | < 0.05 |
+| Backup bucket (≈ 0.45 GB: data buckets, Glue export, build/) | < 0.02 |
+| CloudTrail management events, budget, IAM roles | 0 |
+| **Total** | **≈ 2–3** |
+
+`make restore` brings the identical demo back in about 45–60 minutes (new CloudFront URL).
+
 ## Biggest levers if the pilot continues
 1. Drop interface endpoints you don't need, or the NAT (if mantle PrivateLink is added): −$30–60.
 2. Aurora auto-pause outside business hours: −$30.
